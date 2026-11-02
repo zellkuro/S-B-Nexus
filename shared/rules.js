@@ -40,9 +40,9 @@
         fullSwingSpeed: 3,      // m/s for 100% damage
         maxSwingScale: 1.5,     // a very fast swing does at most 150%
         minSwingScale: 0.75,    // a swing just over the minimum does 75%
-        swingCooldown: 0.45,    // s between hits from one player
+        swingCooldown: 2,       // s: only one swing counts every 2 s (tune in playtests)
         pcAttackRange: 2.5,     // m, PC press-to-attack reach
-        pcAttackCooldown: 0.9,  // s, slower than VR because it needs no effort
+        pcAttackCooldown: 2,    // s: same as VR; PC already does less damage per hit
         pcSwingSpeed: 2.5,      // m/s a PC attack counts as
         regenDelay: 6,          // s out of combat before health comes back
         regenPerSecond: 0.05,   // share of max HP per second while regenerating

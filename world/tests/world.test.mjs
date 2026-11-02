@@ -191,7 +191,7 @@ function fakeWorld({ backendUp = true } = {}) {
         async click(name) { objects[name].handlers.click(); await settle(); },
         // Moves the right hand `speed` m/s for 100 ms, then touches the enemy with the sword.
         async swing(enemyId, speed, head = { x: 0, y: 1.6, z: 20 }) {
-            clock += 1000;
+            clock += 2100; // past the 2 s swing cooldown
             const hand = (x) => ({ head: { position: head, rotation: {} }, rightHand: { position: { x, y: 1.2, z: head.z } } });
             emit("pose-update", hand(0));
             clock += 100;

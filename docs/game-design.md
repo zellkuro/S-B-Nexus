@@ -37,7 +37,8 @@ but you fight your own battles. Parties come later.
 | Theme | Fantasy |
 | Focus | PVE, MMO-style: levels, quests, gold |
 | Group play | **Solo** for now, in a shared multiplayer world. Parties later |
-| Combat | Physical sword swings in VR, with limits (section 6.1) |
+| Combat | Physical sword swings in VR; **one swing counts every 2 s** (tune later). PC keeps press-to-attack (F) |
+| Spells, gold shop | **Later** |
 | Who can fight an enemy | **Whoever hits it first owns it.** Everyone sees the fight; only the owner can hit it or get credit |
 | Death | Back to the starter town, **lose 10% of your gold** (rounded down). XP, level and quests are kept |
 | Code | All game logic in **JavaScript** (the world page and the backend). Unity assets for art only |
@@ -122,16 +123,16 @@ health and goes home. XP, level and quests are never lost.
   more**. Slower contact shows "Swing harder!".
 - **Damage scales with speed:** 75% at 1.5 m/s, 100% at 3 m/s, capped at 150%.
   So a big swing beats a flick, but flailing as fast as possible doesn't pay.
-- **Cooldown:** 0.45 s between hits, so waggling doesn't multiply damage.
+- **Cooldown:** only **one swing counts every 2 s**, so waggling doesn't
+  multiply damage. **[SPIKE]** Tune in playtests.
 - Hand speed comes from `pose-update` (right hand position, last 150 ms).
 - **[DECIDE]** Other limits you mentioned: stamina, a minimum swing *arc*,
   blocking. Stamina is the easiest to add next.
 
 ### 6.2 PC: press to attack
 Desktop has no hand tracking. **F** hits the nearest enemy within 2.5 m at a
-fixed "medium swing" (2.5 m/s, 83% damage) with a slower 0.9 s cooldown, so
-VR players who swing well do more damage. **[DECIDE]** keep PC players, or VR
-only?
+fixed "medium swing" (2.5 m/s, 83% damage) with the same 2 s cooldown, so
+VR players who swing well do more damage. **Decided:** PC players stay.
 
 ### 6.3 Who fights an enemy
 - An idle enemy belongs to nobody. **The first player to hit it owns it**: their
@@ -303,7 +304,7 @@ All in `shared/rules.js` (game) or `world/WebRoot/script.js` (layout).
 | Min swing speed | 1.5 m/s |
 | Full-damage swing | 3 m/s |
 | Swing damage range | 75–150% |
-| Hit cooldown (VR / PC) | 0.45 s / 0.9 s |
+| Hit cooldown (VR / PC) | 2 s / 2 s |
 | PC reach | 2.5 m |
 | Health regen | after 6 s, 5%/s |
 | Death gold loss | 10% |
@@ -335,14 +336,13 @@ All in `shared/rules.js` (game) or `world/WebRoot/script.js` (layout).
 | 5. Spells | The "Spells" in the name: a second combat style | v1.0 |
 
 ## 14. Open decisions
-1. **Spells:** the name promises them. When, and how do you cast in VR
-   (gesture, button, wand)?
-2. **Swing limits:** stamina? blocking? minimum arc?
-3. **PC players:** keep press-to-attack, or VR only?
-4. **Gold:** what to spend it on (shop, sword upgrades, cosmetics)?
-5. **Dialogue:** click-through NPCs (now) or a dialogue board with buttons?
-6. **Offline progress:** throwaway (now) or resync?
-7. **Who owns the Cloudflare account** the backend runs on?
+1. **Swing limits:** beyond the 2 s cooldown: stamina? blocking? minimum arc?
+2. **Dialogue:** click-through NPCs (now) or a dialogue board with buttons?
+3. **Offline progress:** throwaway (now) or resync?
+4. **Who owns the Cloudflare account** the backend runs on?
+
+**Later, by decision:** spells (and how to cast them in VR), and what gold is
+spent on.
 
 ## Sources
 Altspace Creator docs: https://altvr.app/docs/ (pages used: Saving Data,

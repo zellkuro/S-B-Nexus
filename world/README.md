@@ -67,7 +67,7 @@ backend code behind it. It doesn't need Unity.
       `SWORD.attachPosition` / `SWORD.attachEuler` and record what worked.
 - [ ] Gently touch a slime: "Swing harder!" and no damage?
 - [ ] A normal swing hits. Does 1.5 m/s feel like the right minimum?
-- [ ] Waggling fast: limited by the 0.45 s cooldown?
+- [ ] Waggling fast: only one hit every 2 s? Does 2 s feel too slow?
 
 **S3 + S6: Shared enemies (two players)**
 - [ ] Player A hits a slime: health bar shows "(yours)" for A and A's name for B?
