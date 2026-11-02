@@ -53,8 +53,8 @@ These facts from the SDK docs shape the whole design:
 | Fact | Docs page | What it means here |
 |---|---|---|
 | A published world carries **no C# code**, only the scene and its assets | Troubleshooting | Asset Store models, animations and textures work. Asset Store *scripts* (RPG kits, AI packs) don't. Game logic is JavaScript |
-| Visual Scripting runs, but only **allow-listed nodes** | Visual Scripting | A fallback for things JavaScript can't reach (Animator, NavMesh); see S4 |
-| The app includes **AI Navigation (NavMesh)**, Splines, Cinemachine 3, Terrain | Troubleshooting | NavMesh can be baked into the scene; driving agents is S4 |
+| Visual Scripting runs, but only **allow-listed nodes** | Visual Scripting | Enemies (Animator, NavMesh) are built here; see 9.5 |
+| The app includes **AI Navigation (NavMesh)**, Splines, Cinemachine 3, Terrain | Troubleshooting | NavMesh can be baked into the scene, and graphs can drive agents (9.5) |
 | "No built-in way to save a player's own progress between visits"; the page can call **your own server** | Saving Data, Browser | We need the backend. User state is wiped when a player leaves; space state lasts 24 h |
 | `user.uid` is **the same on every visit and in every space** | Multiplayer | The key for a player's save |
 | Nothing proves to *our* server which player is calling | (not documented) | See 9.4: the rules limit what a faked call can do |
@@ -155,8 +155,9 @@ Run only by the owner's page, 10 times a second:
 4. **Dead:** hidden for 15 s, then back at home. If the owner left, anyone
    respawns it 10 s late.
 
-Enemies only ever hurt their owner. **[SPIKE] S4** decides whether movement
-uses NavMesh (walks around obstacles) or straight lines (v1).
+Enemies only ever hurt their owner. Movement uses NavMesh (walks around
+obstacles), driven from Visual Scripting (9.5). The JavaScript test world
+still moves enemies in straight lines.
 
 ### 6.5 Enemies (first zone)
 | Enemy | Level | HP | Damage | Attack every | XP | Gold | Where |
@@ -270,14 +271,15 @@ player token is planned.
   assets. **No C# scripts in the build.**
 - Each scripted object needs a BS component (or a BS Object Id) for the page to
   find it. Enemy and NPC prefabs get one, with fixed ids.
-- **Animations [SPIKE] S4:** JavaScript can't call Animator directly. Options,
-  best first: a Visual Scripting graph on the enemy that plays Animator
-  triggers when the page sets a value (if Animator members pass the Builder's
-  allow-list check); otherwise looping idle/move animations, with attacks
-  shown by effects and sounds.
-- **Pathfinding [SPIKE] S4:** NavMesh is in the app; whether a page or graph
-  can set a NavMeshAgent's destination is the open question. v1 moves enemies
-  in straight lines, with spawn areas kept clear of obstacles.
+- **Enemies run on Visual Scripting.** JavaScript can't reach Animator or
+  NavMeshAgent, but graphs can: the SDK's allow list
+  (`Editor/Scripts/VisualScripting/VsStubsAllowed.cs` in SideQuestVR/BanterSDK)
+  includes `Animator.SetTrigger/SetFloat`, `NavMeshAgent.SetDestination`,
+  `Random`, `Collider.attachedRigidbody` and `Rigidbody.linearVelocity`.
+  Step-by-step build: [unity-first-scene.md](unity-first-scene.md).
+  (On the list means the Builder accepts it; confirm it behaves in the app.)
+- **Asset packs** are chosen with the checklist in the Unity guide (Part 1B)
+  and recorded in [assets.md](assets.md). Pack files are never committed.
 
 ### 9.6 Performance
 Quest headsets are the limit. Low-poly assets, baked lighting, few real-time
@@ -290,7 +292,7 @@ updates are only sent for enemies that are actually moving.
 | S1 | Can the published page call our backend (HTTPS + CORS from `*.worldspace.host`)? | Saving at all | **Yes**, HUD shows OFFLINE if not |
 | S2 | Does a sword attached to the hand fire trigger events on enemies? Is `pose-update` hand speed good enough to tell a swing from a poke? | Combat | **Yes** |
 | S3 | First-hitter ownership: does the synced enemy follow its owner smoothly for other players? | Shared world | **Yes** |
-| S4 | Can Animator triggers and NavMeshAgent destinations be driven (Visual Scripting allow-list, or the page)? | Enemy quality | No: check in Unity (world/README.md) |
+| S4 | Can Animator triggers and NavMeshAgent destinations be driven (Visual Scripting allow-list, or the page)? | Enemy quality | **Allowed in Visual Scripting** (SDK allow list); confirm in the app with the Unity guide |
 | S5 | PC press-to-attack: playable? | PC players | **Yes** |
 | S6 | Does a sword attached with `autoSync` show on your avatar for others, with every page making a copy per player? | Seeing each other fight | **Yes** |
 | S7 | How many enemies can one page drive at 10 Hz before frame rate drops on Quest? | Zone size | Partly (5 slimes) |

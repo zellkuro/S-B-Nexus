@@ -75,12 +75,117 @@ How the pieces talk:
 6. Check the NavMesh package is installed: **Window → Package Manager** →
    top-left dropdown **Unity Registry** → search **AI Navigation**. If it says
    **Install**, click it.
-7. **Import your Asset Store models**: **Window → Package Manager** → **My
-   Assets** → find the sword pack and the enemy pack → **Download** →
-   **Import**.
+7. Pick and import your sword and enemy models: see **Part 1B** next.
 
 > **Tip:** keep only one scene in this project. The SDK publishes one scene
 > per project.
+
+---
+
+## Part 1B: Choose and import your models
+
+You need two things: a **sword** and an **enemy with animations**. There are
+two ways to start:
+
+- **No models yet?** Use simple shapes (1B.1) and build the whole scene with
+  them. The logic doesn't care what things look like; swap in real models
+  later by following 1B.2–1B.6.
+- **Ready to pick packs?** Go to 1B.2.
+
+### 1B.1 Placeholder shapes (no packs needed)
+- **Sword** (in 3.2, instead of a model): first set the `Grip`'s Scale to
+  `0.04, 0.1, 0.04` (a 20 cm hilt). Then right-click `Sword` → **3D Object →
+  Cube** → rename `Model`. Position `0, 0.55, 0`, Scale `0.06, 0.9, 0.02` (a
+  0.9 m blade above the hilt). **Remove its Box Collider.** In 3.3, give the
+  `Blade` collider Center `0, 0.55, 0` and Size `0.08, 0.9, 0.04`.
+- **Enemy** (in 4.1, instead of a model): right-click `Enemy` → **3D Object →
+  Capsule** → rename `Model`. Position `0, 1, 0`. **Remove its Capsule
+  Collider.** Add a small cube as a child at `0, 0.5, 0.5` (a "nose", so you
+  can see which way it faces), and remove that cube's collider too.
+  **Add Component → Animator** on `Model`, with no Controller. The graph's
+  animation nodes then do nothing, which is fine. Skip 4.4.
+
+### 1B.2 What to look for in an enemy pack
+Search the Asset Store (**Window → Asset Store**, or assetstore.unity.com)
+with words like `low poly fantasy monster animated`, `RPG monster pack`,
+`slime animated`, `goblin animated`. Tick **Free Assets** under Pricing to
+start cheap.
+
+Check the pack's page before you get it:
+
+| Check | Why | Where on the page |
+|---|---|---|
+| **Animated**, with at least **idle, walk (or run), attack, hit (or "damage"/"get hit"), death** | The graph uses these five | Description, screenshots, or an "Animations" list |
+| **URP** compatible | Our project uses URP; other packs show up pink until converted (1B.5) | "Render pipeline compatibility" table |
+| **Low poly**: under ~10,000 triangles per character, textures 2048 or smaller (1024 is better), 1–2 materials | Must run on Quest headsets | Description ("tris", "polys", "texture size"), or "mobile" in the title |
+| Works with **Unity 6** | Older packs often still work, but check | "Supported Unity versions" |
+| Recent updates and good reviews | Fewer surprises | Reviews tab, "Latest release" |
+| Rig type: **Humanoid** is easiest | Humanoid characters can also use animations from other packs or Mixamo | Description; you can also check after import (1B.4) |
+
+**Free alternative for humanoid enemies (goblins, skeletons):**
+[Mixamo](https://www.mixamo.com) (free with an Adobe account) has rigged
+characters and animations. Download the character as **FBX for Unity** and
+each animation **Without Skin**; tick **In Place** for walk/run. Check its
+current terms before you use it.
+
+### 1B.3 What to look for in a sword
+- A single sword mesh (not one stuck to a character's hand).
+- Low poly (under ~2,000 triangles), URP compatible.
+- Bonus: a **pivot at the hilt** (the model's centre point is where you'd
+  hold it). If not, it still works; you'll just position it by hand in 3.2.
+- Weapon packs often have many swords: perfect for later upgrades.
+
+### 1B.4 Import and check (5 minutes, before you build with it)
+1. **Window → Package Manager** → top-left dropdown **My Assets** → find the
+   pack → **Download** → **Import**. In the import window you can untick demo
+   scenes and scripts you don't need (C# scripts don't run in Altspace
+   anyway).
+2. Drag the model into the scene next to a default **Cube** (which is 1 m).
+   - Is it the right **size**? An enemy should look roughly real-world sized
+     next to the 1 m cube; a sword should be about 0.8–1.1 m long. If not,
+     select the model **file** (FBX) in the Project window → Inspector →
+     **Model** tab → change **Scale Factor** → **Apply**.
+   - Is it **pink**? See 1B.5.
+3. Find the **animations**: in the Project window, click the little arrow on
+   the model's FBX file (or on the separate animation FBX files) to expand
+   it. The clips have a ▶ triangle icon. Click one, then press ▶ in the
+   preview at the bottom of the Inspector to watch it.
+4. Write down which clip is which (1B.6).
+5. Delete the test model and cube from the scene.
+
+### 1B.5 Fixing common import problems
+| Problem | Fix |
+|---|---|
+| Model is **pink** | The pack was made for the Built-in pipeline. **Window → Rendering → Render Pipeline Converter** → choose **Built-in to URP** → tick **Material Upgrade** → **Initialize And Convert**. If some stay pink: select the material → **Shader** → **Universal Render Pipeline → Lit**, then put the texture back in **Base Map** |
+| Clips **don't play** in the Animator / Animator says "Legacy" | Select the model FBX → Inspector → **Rig** tab → **Animation Type**: **Humanoid** (for two-legged, human-shaped characters) or **Generic** (anything else) → **Apply**. Legacy clips don't work with an Animator Controller |
+| Animations in **separate FBX files** play wrong or not at all | Select each animation FBX → **Rig** tab → same Animation Type as the character. For Humanoid: **Avatar Definition: Copy From Other Avatar** → pick the character's avatar → **Apply** |
+| **Walk/idle stops** after one cycle | Select the clip (or its FBX → **Animation** tab → the clip) → tick **Loop Time** (and **Loop Pose**) → **Apply**. Only idle and walk loop; attack, hit and death don't |
+| Enemy **walks away from its own position** while animating | The walk has root motion. Use an **In Place** version if the pack has one; otherwise keep **Apply Root Motion** unticked on the Animator (4.4 step 6) |
+| Model is **lying down** or facing backwards | Rotate the `Model` child (not the `Enemy` root) until it stands up and faces **+Z** |
+
+### 1B.6 Record what you picked
+Fill this in (copy it into [`docs/assets.md`](assets.md), so the next person
+knows):
+
+| Our name | Clip in your pack | Loops? |
+|---|---|---|
+| Idle | | yes |
+| Walk (or Run) | | yes |
+| Attack | | no |
+| Hit | | no |
+| Death | | no |
+
+**Missing one?**
+- No **Hit**: leave the Hit state out in 4.4. The `Hit` trigger then does
+  nothing.
+- No **Walk** but a **Run**: use Run, and raise `WalkSpeed` in the graph
+  (6.1) so it doesn't look like running in slow motion.
+- No **Death**: leave it out; the enemy simply disappears 2 s after dying.
+
+> **Don't commit Asset Store files to this GitHub repo.** It's public, and the
+> Asset Store licence lets you use the assets in your game but not share the
+> files. Commit graphs and your own work only; anyone following this guide
+> downloads the packs themselves. `docs/assets.md` records which ones.
 
 ---
 
@@ -124,7 +229,8 @@ How the pieces talk:
 
 ### 3.2 Add your sword model
 1. From your sword pack, drag the sword **prefab or model** onto `Sword` in
-   the Hierarchy, so it becomes a child.
+   the Hierarchy, so it becomes a child. Rename it `Model`. (No pack yet? Use
+   the placeholder in 1B.1.)
 2. Set the model's **Position** to `0, 0, 0` and rotate/scale it so **the hilt
    sits on the Grip** (the thin cylinder) and **the blade points up** (along
    the Grip's Y axis, the green arrow).
@@ -158,7 +264,8 @@ How the pieces talk:
 1. **GameObject → Create Empty**. Rename it `Enemy`. **Position** `0, 0, 8`.
 2. Drag your enemy **model prefab** onto `Enemy` so it's a child. Set the
    child's Position to `0, 0, 0` and make sure it faces **+Z** (the blue
-   arrow). Rename the child `Model`.
+   arrow). Rename the child `Model`. (No pack yet? Use the placeholder in
+   1B.1 and skip 4.4.)
 3. If the model has its own colliders or a Rigidbody, **remove** them.
 
 ### 4.2 NavMeshAgent (walking)
@@ -175,8 +282,8 @@ How the pieces talk:
    this time; it's fine for the model too).
 
 ### 4.4 Animator (your model's animations)
-Your enemy pack should come with animation clips (idle, walk/run, attack, hit,
-death). We drive them with **4 parameters**.
+Uses the clips you found in **1B.4–1B.6**. We drive them with **4
+parameters**, so any pack works the same way once its clips are mapped.
 
 1. **Project window** → right-click in your own folder → **Create → Animator
    Controller**. Name it `EnemyController`.
@@ -186,8 +293,10 @@ death). We drive them with **4 parameters**.
    - `Attack` (**Trigger**)
    - `Hit` (**Trigger**)
    - `Die` (**Trigger**)
-4. Drag these clips from your pack into the Animator window: **Idle**,
-   **Walk** (or Run), **Attack**, **Hit** (or "Get Hit"/"Damage"), **Death**.
+4. Drag the five clips you listed in **1B.6** from the Project window into the
+   Animator window: **Idle**, **Walk** (or Run), **Attack**, **Hit**,
+   **Death**. Rename each state to those names (select it → name at the top of
+   the Inspector), so the table below matches whatever your pack called them.
    - Right-click **Idle** → **Set as Layer Default State** (it turns orange).
 5. Make the transitions (right-click a state → **Make Transition** → click the
    target state). Select each arrow and set it up in the Inspector:

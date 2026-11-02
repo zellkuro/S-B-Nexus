@@ -86,16 +86,10 @@ backend code behind it. It doesn't need Unity.
 **Record:** anything that broke, the sword offsets that worked, and how swing
 speed felt.
 
-## S4: check in Unity (no headset needed)
-JavaScript can't drive Animator or NavMeshAgent directly. Find out whether
-Visual Scripting can:
-1. Add a Script Machine to any object with a graph that uses
-   **Animator: Set Trigger** and **Nav Mesh Agent: Set Destination**.
-2. Open the Builder and run the checklist.
-3. If **Visual Scripting node support** reports those nodes as not allowed,
-   they won't run in the app: enemies stay on straight-line movement with
-   looping animations. Note the result in the design doc (section 9.5), then
-   delete the test graph.
+## S4: animations and pathfinding
+JavaScript can't drive Animator or NavMeshAgent, but Visual Scripting can:
+the SDK's allow list includes both. The Unity-side enemy is built in
+[docs/unity-first-scene.md](../docs/unity-first-scene.md).
 
 ## Not verified yet
 Written from the SDK docs without running it in the app. Check these first if
