@@ -1,0 +1,14 @@
+name = "sbn-backend"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Who may call the backend from a browser. Altspace worlds are served from
+# https://<world>.worldspace.host. Use "*" while testing locally.
+ALLOWED_ORIGINS = "https://*.worldspace.host"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sbn"
+# Replace with the id that `npx wrangler d1 create sbn` prints (see backend/README.md).
+database_id = "00000000-0000-0000-0000-000000000000"

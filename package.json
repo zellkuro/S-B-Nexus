@@ -1,0 +1,8 @@
+{
+  "name": "swords-and-spells-nexus",
+  "private": true,
+  "description": "Swords and Spells Nexus: a fantasy PVE RPG for Altspace",
+  "scripts": {
+    "test": "node --test \"shared/*.test.js\" \"world/tests/*.test.mjs\" \"backend/tests/*.test.js\""
+  }
+}

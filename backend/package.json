@@ -1,0 +1,16 @@
+{
+  "name": "sbn-backend",
+  "private": true,
+  "type": "module",
+  "description": "Swords and Spells Nexus backend: player progress on Cloudflare Workers + D1",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "dev": "wrangler dev",
+    "db:init:local": "wrangler d1 execute sbn --local --file=schema.sql",
+    "db:init": "wrangler d1 execute sbn --remote --file=schema.sql",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  }
+}
