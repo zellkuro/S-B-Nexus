@@ -32,6 +32,7 @@ Hierarchy
 ├── PlayerHUD             (attached to your head: your health bar)
 │   └── HUD Bar Pivot
 │       └── HUD Bar Fill
+├── Table                 (the sword rests on it)
 ├── Sword                 (grabbable)
 │   ├── Grip              (where your hand holds it)
 │   ├── Blade             (trigger collider, tag UserTag1)
@@ -207,8 +208,11 @@ knows):
 1. Select `Ground`. **Add Component** → search **NavMeshSurface** → add it.
 2. On the NavMeshSurface component, click **Bake**.
 3. You'll see a blue overlay on the ground in the Scene view. That's where the
-   enemy can walk. If you add obstacles later (rocks, walls), click **Bake**
-   again.
+   enemy can walk. If you add obstacles later (rocks, walls, the table in
+   3.1), click **Bake** again. **Before re-baking once the enemy exists**, set
+   the NavMeshSurface's **Include Layers** to leave out **UserLayer9**
+   (the enemy's layer, Part 4); otherwise the enemy cuts a hole in its own
+   walkable area.
 
 ---
 
@@ -220,12 +224,15 @@ knows):
    synced so others see it move, and a child **Stick** whose collider is the
    handle (held anywhere along its length, like a sword grip).
 2. Rename the root `Sword`. Rename the child `Stick` to `Grip`.
-3. Move the sword somewhere easy to reach, e.g. **Position** `0, 1, -8`
-   (just in front of the spawn point, at waist height).
-4. Select `Sword` and in its **Rigidbody**, tick **Is Kinematic** for now, so
-   it floats there until you grab it instead of falling over. (Grabbing still
-   works.) If you'd rather it lies on a table, leave it unticked and build a
-   table under it.
+3. Make a table for it to rest on: **GameObject → 3D Object → Cube**, rename
+   `Table`, **Position** `0, 0.45, -8`, **Scale** `1.4, 0.9, 0.6` (waist
+   height, just in front of the spawn point).
+4. Lay the sword on it: select `Sword`, **Position** `0.4, 0.95, -8`,
+   **Rotation** `0, 0, 90`. It drops a few centimetres onto the table when
+   you press Play.
+5. Leave the Rigidbody's **Is Kinematic** **unticked**. Your hand holds things
+   with a physics joint, and a joint can't move a kinematic body: the sword
+   would stay stuck, and its speed (which the enemy checks) would read 0.
 
 ### 3.2 Add your sword model
 1. From your sword pack, drag the sword **prefab or model** onto `Sword` in
@@ -246,15 +253,16 @@ knows):
 2. **Add Component → Box Collider**. Tick **Is Trigger**. Set its **Size** and
    **Center** so the green box covers the blade of your model (look in the
    Scene view).
-3. Set `Blade`'s **Layer** to **UserLayer9**. (Hands and teleport ignore it,
-   so it won't get in the way of grabbing.) If Unity asks "change children?",
-   choose **No, this object only**.
+3. Set `Blade`'s **Layer** to **UserLayer9**. (Teleport and the grapple
+   ignore this layer, and grabbing only looks at the Grabbable layer, so the
+   blade never gets in the way of picking the sword up by its grip.)
 4. Set `Blade`'s **Tag** to **UserTag1**. That's how the enemy knows "this is
    a sword".
 
 > Why a trigger? A trigger doesn't push things around; it only reports "I
 > touched something". The sword's Rigidbody (on the root) makes Unity report
-> the touch.
+> the touch. It also means the blade doesn't rest on anything: the sword lies
+> on its grip, which is why it's laid flat on the table.
 
 ---
 
@@ -352,6 +360,8 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
 ### 5.1 HUD bar under your view
 1. **GameObject → Create Empty** → rename `PlayerHUD`.
 2. **Add Component** → **BS Attached Object**. Set:
+   - **Uid**: `me` (means "the player looking at it". Left empty, it
+     attaches to nobody.)
    - **Avatar Attachment Point**: `HEAD`
    - **Attachment Position**: `0, -0.25, 0.7` (a little below your eyeline)
    - **Auto Attach**: ticked
@@ -392,8 +402,11 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
 - **Numbers on ports:** click an unconnected input port's box to type a value.
 - **Words and numbers with no box:** some ports (like **Set Variable**'s
   Value, or **Equal**'s A and B) have no box to type into. Add a small
-  literal node instead: search **String Literal** (for words like `Chase`) or
-  **Float Literal** (for numbers), type the value in it, and wire it in.
+  literal node instead: in the fuzzy finder type **String** (for words like
+  `Chase`) or **Float** (for numbers) and pick the result marked
+  **Literal**. Type the value in it and wire it in.
+- **Comparing words:** if an **Equal** or **Not Equal** node shows number
+  boxes on A and B, select it and untick **Numeric** in the Graph Inspector.
 - **Save** with Ctrl+S.
 
 **Pictures:** every graph below has a picture drawn in the style of Unity's
@@ -537,7 +550,7 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
 1. **If**: Get Variable `PlayerDistance` **Less** `AggroRange` →
    - True: **Set Variable** `State` = `Chase` → **Nav Mesh Agent: Set Speed**
      ← `RunSpeed`.
-   - False: **If**: **Get Time** (Time: Time) **Greater** `NextWanderTime` →
+   - False: **If**: **Time: Get Time** **Greater** `NextWanderTime` →
      True:
      1. **Random: Inside Unit Circle** → **Expose Vector 2** (x, y).
      2. **Vector 3: Create**: X = x × `WanderRadius`, Y = `0`, Z = y ×
@@ -555,7 +568,9 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
 ![Wander, part 3: walk speed, and NextWanderTime = now + 3 to 6 seconds](images/unity-graphs/6-4-wander-c.png)
 
 **Chase**
-1. **Nav Mesh Agent: Set Destination** ← PlayerFlat.
+1. **Nav Mesh Agent: Set Destination** ← PlayerFlat → **Nav Mesh Agent: Set
+   Speed** ← `RunSpeed`. (Setting the speed here too means it runs however
+   the chase started, including when you hit it from behind.)
 2. → **If**: **Vector 3: Distance** (Transform position, Get Variable
    `Home`) **Greater** `LeashRange` → True: **Set Variable** `State` =
    `Return`. **Nav Mesh Agent: Set Destination** ← `Home`.
@@ -632,30 +647,35 @@ enough, the enemy is alive, and 2 s have passed since the last hit.
    **Coroutine** (this lets it wait).
 2. → **Set Variable** `State` = `Dead`.
 3. → **Nav Mesh Agent: Reset Path**.
-4. → **Animator: Set Trigger** (`Anim`) `Die`.
-5. → **Capsule Collider: Set Enabled** (target **This**) = false (can't be hit
+4. → **Animator: Reset Trigger** (`Anim`) `Hit` → **Animator: Reset Trigger**
+   (`Anim`) `Attack`. (The killing blow also asked for the Hit animation.
+   Clearing it stops Hit from interrupting the death animation.)
+5. → **Animator: Set Trigger** (`Anim`) `Die`.
+
+![Dying, part 1: State Dead, stop, clear the Hit and Attack triggers, play Die](images/unity-graphs/6-6-a-die.png)
+
+6. → **Capsule Collider: Set Enabled** (target **This**) = false (can't be hit
    while dead).
-6. → **Game Object: Set Active** (target `HealthBar`) = false.
-
-![Dying, part 1: State Dead, stop, play Die, turn off the hitbox and hide the health bar](images/unity-graphs/6-6-a-die.png)
-
-7. → **Wait For Seconds** `2` (let the death animation play) → **Game
+7. → **Game Object: Set Active** (target `HealthBar`) = false.
+8. → **Wait For Seconds** `2` (let the death animation play) → **Game
    Object: Set Active** (`Model`) = false.
 
-8. → **Wait For Seconds** ← `RespawnSeconds`.
-9. → **Nav Mesh Agent: Warp** ← Get Variable `Home`.
+![Dying, part 2: turn off the hitbox, hide the health bar, wait 2 s, hide the model](images/unity-graphs/6-6-b-vanish.png)
 
-![Dying, part 2: wait 2 s, hide the model, wait RespawnSeconds, warp home](images/unity-graphs/6-6-b-wait-and-respawn.png)
-
-10. → **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
+9. → **Wait For Seconds** ← `RespawnSeconds`.
+10. → **Nav Mesh Agent: Warp** ← Get Variable `Home`.
+11. → **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
     `UpdateBar`.
-11. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
-    **Capsule Collider: Set Enabled** = true.
-12. → **Animator: Rebind** (target `Anim`) (back to Idle, out of the death
-    pose).
-13. → **Set Variable** `State` = `Wander`.
 
-![Dying, part 3: refill Health, show the model and bar, turn the hitbox on, reset the Animator, wander](images/unity-graphs/6-6-c-come-back.png)
+![Dying, part 3: wait RespawnSeconds, warp home, refill Health and update the bar](images/unity-graphs/6-6-c-respawn.png)
+
+12. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
+    **Capsule Collider: Set Enabled** = true.
+13. → **Animator: Rebind** (target `Anim`) (back to Idle, out of the death
+    pose).
+14. → **Set Variable** `State` = `Wander`.
+
+![Dying, part 4: show the model and bar, turn the hitbox on, reset the Animator, wander](images/unity-graphs/6-6-d-come-back.png)
 
 ### 6.7 Part F: when you die, it goes home
 1. **On Global Event**, name `PlayerDied`, Arguments `0`.
@@ -702,7 +722,7 @@ Add **Debug: Log** nodes to print values to the Console.
 - [ ] Touch the enemy gently: no damage. Swing properly: health bar drops.
 - [ ] Swing twice quickly: only the first counts (2 s).
 - [ ] Does 1.5 m/s feel right as the minimum? (Change `MinSwingSpeed`.)
-- [ ] Kill it: death animation, gone, back after 15 s.
+- [ ] Kill it: death animation, gone, back about 17 s later (2 s + 15 s).
 - [ ] Let it beat you: back at the spawn point, full health.
 - [ ] Is the HUD bar readable and not in the way? (Change the
       **Attachment Position** on `PlayerHUD`.)
@@ -715,7 +735,9 @@ Add **Debug: Log** nodes to print values to the Console.
 
 | Problem | Try |
 |---|---|
-| Enemy doesn't move | NavMesh baked? (blue overlay on the ground.) Enemy placed on the blue area? Graph saved? |
+| Enemy doesn't move | NavMesh baked? (blue overlay on the ground.) Enemy placed on the blue area? Graph saved? A hole in the blue around the enemy: re-bake without **UserLayer9** (2.3) |
+| Can't pick up the sword, or it won't move | `Sword`'s Rigidbody **Is Kinematic** must be off (3.1). The `Grip` must still have its collider and **BS Grab Handle** |
+| Dead enemy jumps up again | Part E step 4: reset the `Hit` and `Attack` triggers before `Die`. In the Animator, the Death state must have no transitions out |
 | Enemy slides without animating | `Anim` variable points at the `Model`'s Animator? Parameter named exactly `Speed`? |
 | Enemy floats or sinks | Change the NavMeshAgent's **Base Offset**, or the `Model` child's Y position |
 | Sword hits never register | `Blade` has **Is Trigger** on, Tag **UserTag1**, and is a child of `Sword` (which has the Rigidbody)? Enemy's Capsule Collider **Is Trigger** on? Try moving `Blade` to the **Default** layer |

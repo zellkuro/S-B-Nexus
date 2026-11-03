@@ -326,11 +326,13 @@ const graphs = [
 
     // ---------------- 6.4 Chase ----------------
     {
-        id: "6-4-chase-a", title: "EnemyGraph · C. Chase (1 of 2): follow you, but not too far from home",
+        id: "6-4-chase-a", title: "EnemyGraph · C. Chase (1 of 2): run after you, but not too far from home",
         nodes: [
             note("from", "From Switch On String: Chase", { flowOut: true }),
             getVar("pf", "PlayerFlat", "vector3"),
             setDestination("dest"),
+            getVar("run", "RunSpeed"),
+            setSpeed("spd"),
             getPosition("me"),
             getVar("home", "Home", "vector3"),
             distance("dist"),
@@ -344,7 +346,7 @@ const graphs = [
             note("f", "False: still close enough to home. Continues in the next picture.", { flowIn: true })
         ],
         edges: [
-            "from.out>dest.in", "pf.out>dest.dest", "dest.out>if.in",
+            "from.out>dest.in", "pf.out>dest.dest", "dest.out>spd.in", "run.out>spd.value", "spd.out>if.in",
             "me.out>dist.a", "home.out>dist.b", "dist.out>gt.a", "leash.out>gt.b", "gt.out>if.cond",
             "if.t>st.in", "ret.out>st.value", "st.out>dest2.in", "home2.out>dest2.dest", "if.f>f.in"
         ]
@@ -521,7 +523,7 @@ const graphs = [
 
     // ---------------- 6.6 Part E ----------------
     {
-        id: "6-6-a-die", title: "EnemyGraph · E. Dying (1 of 3): fall, and stop being hittable",
+        id: "6-6-a-die", title: "EnemyGraph · E. Dying (1 of 4): stop, and play the death animation",
         nodes: [
             event("ev", "Custom Event", [target(), value("name", "", "string", "Die")], [flowOut()]),
             note("co", "Select this node and tick Coroutine in the Graph Inspector."),
@@ -529,42 +531,55 @@ const graphs = [
             setVar("st", "State", "string"),
             resetPath("stop"),
             getVar("anim", "Anim", "object"),
+            action("rh", "Animator", "Reset Trigger", [target(), value("name", "Name", "string", "Hit")], "animator"),
+            action("ra", "Animator", "Reset Trigger", [target(), value("name", "Name", "string", "Attack")], "animator"),
             setTrigger("trig", "Die"),
+            note("next", "Continues in the next picture.", { flowIn: true })
+        ],
+        edges: [
+            "ev.out>st.in", "dead.out>st.value", "st.out>stop.in", "stop.out>rh.in", "anim.out>rh.target",
+            "rh.out>ra.in", "anim.out>ra.target", "ra.out>trig.in", "anim.out>trig.target", "trig.out>next.in"
+        ]
+    },
+    {
+        id: "6-6-b-vanish", title: "EnemyGraph · E. Dying (2 of 4): stop being hittable, then vanish",
+        nodes: [
+            note("from", "From Animator: Set Trigger Die (previous picture)", { flowOut: true }),
             setColliderEnabled("col", false),
             getVar("bar", "HealthBar", "object"),
+            setActive("hidebar", false),
+            wait("w1", 2),
+            getVar("model", "Model", "object"),
             setActive("hide", false),
             note("next", "Continues in the next picture.", { flowIn: true })
         ],
         edges: [
-            "ev.out>st.in", "dead.out>st.value", "st.out>stop.in", "stop.out>trig.in", "anim.out>trig.target",
-            "trig.out>col.in", "col.out>hide.in", "bar.out>hide.target", "hide.out>next.in"
+            "from.out>col.in", "col.out>hidebar.in", "bar.out>hidebar.target", "hidebar.out>w1.in",
+            "w1.out>hide.in", "model.out>hide.target", "hide.out>next.in"
         ]
     },
     {
-        id: "6-6-b-wait-and-respawn", title: "EnemyGraph · E. Dying (2 of 3): vanish, wait, go home",
+        id: "6-6-c-respawn", title: "EnemyGraph · E. Dying (3 of 4): wait, then go home healed",
         nodes: [
             note("from", "From Game Object: Set Active (previous picture)", { flowOut: true }),
-            wait("w1", 2),
-            getVar("model", "Model", "object"),
-            setActive("hide", false),
             getVar("resp", "RespawnSeconds"),
             wait("w2"),
             getVar("home", "Home", "vector3"),
             action("warp", "Nav Mesh Agent", "Warp", [target(), value("pos", "New Position", "vector3")], "nav"),
-            note("next", "Continues in the next picture.", { flowIn: true })
-        ],
-        edges: [
-            "from.out>w1.in", "w1.out>hide.in", "model.out>hide.target", "hide.out>w2.in", "resp.out>w2.delay",
-            "w2.out>warp.in", "home.out>warp.pos", "warp.out>next.in"
-        ]
-    },
-    {
-        id: "6-6-c-come-back", title: "EnemyGraph · E. Dying (3 of 3): come back to life",
-        nodes: [
-            note("from", "From Nav Mesh Agent: Warp (previous picture)", { flowOut: true }),
             getVar("max", "MaxHealth"),
             setVar("hp", "Health"),
             triggerCustom("upd", "UpdateBar"),
+            note("next", "Continues in the next picture.", { flowIn: true })
+        ],
+        edges: [
+            "from.out>w2.in", "resp.out>w2.delay", "w2.out>warp.in", "home.out>warp.pos",
+            "warp.out>hp.in", "max.out>hp.value", "hp.out>upd.in", "upd.out>next.in"
+        ]
+    },
+    {
+        id: "6-6-d-come-back", title: "EnemyGraph · E. Dying (4 of 4): come back to life",
+        nodes: [
+            note("from", "From Trigger Custom Event UpdateBar (previous picture)", { flowOut: true }),
             getVar("model", "Model", "object"),
             setActive("show", true),
             getVar("bar", "HealthBar", "object"),
@@ -576,9 +591,8 @@ const graphs = [
             setVar("st", "State", "string")
         ],
         edges: [
-            "from.out>hp.in", "max.out>hp.value", "hp.out>upd.in", "upd.out>show.in", "model.out>show.target",
-            "show.out>show2.in", "bar.out>show2.target", "show2.out>col.in", "col.out>rebind.in",
-            "anim.out>rebind.target", "rebind.out>st.in", "wander.out>st.value"
+            "from.out>show.in", "model.out>show.target", "show.out>show2.in", "bar.out>show2.target",
+            "show2.out>col.in", "col.out>rebind.in", "anim.out>rebind.target", "rebind.out>st.in", "wander.out>st.value"
         ]
     },
 
