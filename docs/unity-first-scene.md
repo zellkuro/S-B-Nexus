@@ -390,7 +390,20 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
   the node's text box. (Shortcut: drag a variable from the **Blackboard**
   panel → Object tab, onto the graph.)
 - **Numbers on ports:** click an unconnected input port's box to type a value.
+- **Words and numbers with no box:** some ports (like **Set Variable**'s
+  Value, or **Equal**'s A and B) have no box to type into. Add a small
+  literal node instead: search **String Literal** (for words like `Chase`) or
+  **Float Literal** (for numbers), type the value in it, and wire it in.
 - **Save** with Ctrl+S.
+
+**Pictures:** every graph below has a picture drawn in the style of Unity's
+graph window. Build what you see, left to right. (They're drawn from this
+guide, not screenshots, so small details like icons look a little different.)
+Long graphs are split into several pictures; a yellow note says where each
+one carries on. Click a picture to see it full size.
+
+![How to read the graph pictures: flow wires, value wire colours, literal nodes and Get Variable](images/unity-graphs/0-legend.png)
+
 
 ### 5.4 GameManagerGraph
 Delete the default **On Start** / **On Update** nodes if you don't need them.
@@ -403,9 +416,13 @@ Delete the default **On Start** / **On Update** nodes if you don't need them.
 5. **Transform: Set Local Scale** → its target (top input) from Get Variable
    `HudPivot`; value from the Vector 3. Flow: Custom Event → Set Local Scale.
 
+![GameManagerGraph A: Custom Event UpdateHud sets HUD Bar Pivot's scale to Health ÷ MaxHealth](images/unity-graphs/5-4-a-update-hud.png)
+
 **B. On start: fill up**
 1. **On Start** → **Set Variable** `Health` (value: Get Variable `MaxHealth`)
    → **Trigger Custom Event** (name `UpdateHud`, target: **This**).
+
+![GameManagerGraph B: On Start sets Health to MaxHealth, then triggers UpdateHud](images/unity-graphs/5-4-b-on-start.png)
 
 **C. Getting hit**
 1. **On Global Event** (Events → BS → Utils). Click it; in the Graph
@@ -422,6 +439,10 @@ Delete the default **On Start** / **On Update** nodes if you don't need them.
    3. → **Trigger Custom Event** `UpdateHud`.
    4. → **Trigger Global Event** (BS → Utils), name `PlayerDied`, Arguments
       `0`.
+
+![GameManagerGraph C, part 1: On Global Event PlayerHit subtracts the damage from Health, updates the HUD, and checks Health ≤ 0](images/unity-graphs/5-4-c1-getting-hit.png)
+
+![GameManagerGraph C, part 2: teleport to the spawn point, refill Health, update the HUD, trigger PlayerDied](images/unity-graphs/5-4-c2-you-died.png)
 
 That's your health done. Later, `PlayerDied` is also where the backend's
 "death" event (lose 10% gold) will be sent.
@@ -456,6 +477,8 @@ That's your health done. Later, `PlayerDied` is also where the backend's
    | `NextWanderTime` | Float | `0` | (used by the graph) |
    | `LastAttackTime` | Float | `0` | (used by the graph) |
    | `LastHitTime` | Float | `-10` | (used by the graph) |
+   | `PlayerFlat` | Vector 3 | `0, 0, 0` | (used by the graph) Your position, at the enemy's height |
+   | `PlayerDistance` | Float | `0` | (used by the graph) How far you are |
    | `Anim` | Animator | drag `Model` in | |
    | `BarPivot` | Transform | drag `Bar Pivot` in | |
    | `Model` | Game Object | drag `Model` in | |
@@ -476,28 +499,42 @@ them tidy.
    **Set Variable** `Health` ← Get Variable `MaxHealth` →
    **Trigger Custom Event** `UpdateBar`.
 
+![EnemyGraph A: Custom Event UpdateBar sets Bar Pivot's scale to Health ÷ MaxHealth](images/unity-graphs/6-2-a-update-bar.png)
+
+![EnemyGraph A: On Start saves Home, fills Health and updates the bar](images/unity-graphs/6-2-b-on-start.png)
+
 ### 6.3 Part B: every frame, look where the player is
-1. **On Update** → **Switch On String**. Its input: Get Variable `State`. In
-   the Graph Inspector add the options `Wander`, `Chase`, `Attack`, `Return`.
-   (`Dead` isn't listed, so a dead enemy does nothing.)
-2. Two values you'll reuse (make them once, wire them to several places):
-   - **Player feet**: **Local User State** (BS → User) gives your head
-     **Position**. Feed it into **Expose Vector 3** (gets x, y, z). Then
-     **Vector 3: Create** with X = head x, Y = **this enemy's** position y
-     (Transform: Get Position → Expose → y), Z = head z. Call this
-     *PlayerFlat* (you can add a **Sticky Note** to label it).
-   - **Distance to player**: **Vector 3: Distance** (A: PlayerFlat, B:
-     Transform: Get Position of This).
-3. Also on every frame, before the switch: **Animator: Set Float** (target:
-   Get Variable `Anim`) name `Speed`, value **Nav Mesh Agent: Get Velocity** →
-   **Vector 3: Get Magnitude**. Wire the flow: On Update → Set Float → Switch
-   On String.
+Every frame, the enemy works out where you are and saves it in two
+variables, so the four states (6.4) can just read them.
+
+1. **On Update** → **Set Variable** `PlayerFlat`. Its value is your position
+   at the enemy's height:
+   - **Local User State** (BS → User) gives your head **Position** → into an
+     **Expose** node (Vector 3), which splits it into X, Y, Z.
+   - **Transform: Get Position** (target **This**) → another **Expose**.
+   - **Vector 3: Create** with X = your X, **Y = the enemy's Y**, Z = your Z.
+2. → **Set Variable** `PlayerDistance` ← **Vector 3: Distance** (A: Get
+   Variable `PlayerFlat`, B: Transform: Get Position of **This**).
+
+![EnemyGraph B, part 1: On Update saves PlayerFlat and PlayerDistance](images/unity-graphs/6-3-a-where-is-the-player.png)
+
+3. → **Animator: Set Float** (target: Get Variable `Anim`), name `Speed`,
+   value **Nav Mesh Agent: Get Velocity** → **Vector 3: Get Magnitude**. This
+   plays the walk animation when it moves.
+4. → **Switch On String**. Its Selector: Get Variable `State`. Select the
+   node, and in the Graph Inspector add the options `Wander`, `Chase`,
+   `Attack`, `Return`. (`Dead` isn't listed, so a dead enemy does nothing.)
+
+![EnemyGraph B, part 2: set the Speed animation parameter, then Switch On String on State](images/unity-graphs/6-3-b-animate-and-switch.png)
 
 ### 6.4 Part C: the four states
 Wire each from its output on **Switch On String**.
 
+Wherever a step below says **PlayerFlat** or **Distance to player**, use a
+**Get Variable** `PlayerFlat` / `PlayerDistance` node.
+
 **Wander**
-1. **If**: Distance to player **Less** `AggroRange` →
+1. **If**: Get Variable `PlayerDistance` **Less** `AggroRange` →
    - True: **Set Variable** `State` = `Chase` → **Nav Mesh Agent: Set Speed**
      ← `RunSpeed`.
    - False: **If**: **Get Time** (Time: Time) **Greater** `NextWanderTime` →
@@ -511,6 +548,12 @@ Wire each from its output on **Switch On String**.
      6. **Set Variable** `NextWanderTime` = Get Time + **Random: Range**
         (`3`, `6`).
 
+![Wander, part 1: chase if PlayerDistance is less than AggroRange; otherwise check whether it's time to move](images/unity-graphs/6-4-wander-a.png)
+
+![Wander, part 2: a random spot within WanderRadius of Home, set as the destination](images/unity-graphs/6-4-wander-b.png)
+
+![Wander, part 3: walk speed, and NextWanderTime = now + 3 to 6 seconds](images/unity-graphs/6-4-wander-c.png)
+
 **Chase**
 1. **Nav Mesh Agent: Set Destination** ← PlayerFlat.
 2. → **If**: **Vector 3: Distance** (Transform position, Get Variable
@@ -518,6 +561,10 @@ Wire each from its output on **Switch On String**.
    `Return`. **Nav Mesh Agent: Set Destination** ← `Home`.
 3. False → **If**: Distance to player **Less** `AttackRange` → True:
    **Set Variable** `State` = `Attack` → **Nav Mesh Agent: Reset Path**.
+
+![Chase, part 1: head for PlayerFlat; past LeashRange from Home, return home](images/unity-graphs/6-4-chase-a.png)
+
+![Chase, part 2: within AttackRange, switch to Attack and stop](images/unity-graphs/6-4-chase-b.png)
 
 **Attack**
 1. **Transform: Look At** (target **This**) ← PlayerFlat. (Turns to face you.)
@@ -530,6 +577,10 @@ Wire each from its output on **Switch On String**.
    3. **Trigger Global Event**, name `PlayerHit`, **Arguments** `1`,
       `argument_0` ← Get Variable `Damage`.
 
+![Attack, part 1: look at you; if you're more than AttackRange + 0.5 away, chase again](images/unity-graphs/6-4-attack-a.png)
+
+![Attack, part 2: every AttackEvery seconds, play Attack and send PlayerHit with Damage](images/unity-graphs/6-4-attack-b.png)
+
 **Return**
 1. **If**: **Vector 3: Distance** (Transform position, `Home`) **Less** `1` →
    True:
@@ -537,27 +588,44 @@ Wire each from its output on **Switch On String**.
       `UpdateBar`.
    2. **Set Variable** `State` = `Wander`.
 
+![Return: within 1 m of Home, refill Health, update the bar, and wander again](images/unity-graphs/6-4-return.png)
+
 ### 6.5 Part D: getting hit by the sword
+A hit counts only if all four checks pass: it's the sword, it was swung hard
+enough, the enemy is alive, and 2 s have passed since the last hit.
+
 1. **On BS Trigger Enter** (Events → BS → Trigger). It fires when anything
    enters the Enemy's hitbox. Its **Collider** output is what touched it.
 2. → **If**: **Collider: Compare Tag** (target: the Collider output) tag
    `UserTag1`. (Only the blade has this tag. Your body touching the enemy
    is ignored.)
-3. True → **If**: Get Variable `State` **Not Equal** `Dead`.
-4. True → **If**: Get Time **Greater** `LastHitTime` + `SwingCooldown`.
-   (Only one hit counts every 2 s.)
-5. True → **If**: swing speed **Greater Or Equal** `MinSwingSpeed`, where
+3. True → **If**: swing speed **Greater Or Equal** `MinSwingSpeed`, where
    swing speed = Collider output → **Collider: Get Attached Rigidbody** →
    **Rigidbody: Get Linear Velocity** → **Vector 3: Get Magnitude**.
+
+![Getting hit, part 1: is it the sword (tag UserTag1), and is it moving at least MinSwingSpeed?](images/unity-graphs/6-5-a-sword-and-speed.png)
+
+4. True → **If**: Get Variable `State` **Not Equal** `Dead`.
+5. True → **If**: Get Time **Greater** `LastHitTime` + `SwingCooldown`.
+   (Only one hit counts every 2 s.)
+
+![Getting hit, part 2: not dead, and SwingCooldown has passed since LastHitTime](images/unity-graphs/6-5-b-alive-and-cooldown.png)
+
 6. True →
    1. **Set Variable** `LastHitTime` = Get Time.
    2. **Set Variable** `Health` = `Health` − `SwordDamage`.
    3. **Trigger Custom Event** `UpdateBar`.
    4. **Animator: Set Trigger** (`Anim`) `Hit`.
-   5. **If** `State` **Equal** `Wander` → True: **Set Variable** `State` =
+
+![Getting hit, part 3: save LastHitTime, subtract SwordDamage, update the bar, play Hit](images/unity-graphs/6-5-c-take-damage.png)
+
+   5. → **If** `State` **Equal** `Wander` → True: **Set Variable** `State` =
       `Chase` (hitting it from behind makes it fight back).
    6. → **If** `Health` **Less Or Equal** `0` → True: **Trigger Custom
-      Event** `Die`.
+      Event** `Die`. (Wire **both** the Set Variable's output and the first
+      If's **False** into this If.)
+
+![Getting hit, part 4: if wandering, start chasing; if Health ≤ 0, trigger Die](images/unity-graphs/6-5-d-fight-back-or-die.png)
 
 ### 6.6 Part E: dying and coming back
 1. **Custom Event** `Die`. Select it, and in the Graph Inspector tick
@@ -568,10 +636,17 @@ Wire each from its output on **Switch On String**.
 5. → **Capsule Collider: Set Enabled** (target **This**) = false (can't be hit
    while dead).
 6. → **Game Object: Set Active** (target `HealthBar`) = false.
+
+![Dying, part 1: State Dead, stop, play Die, turn off the hitbox and hide the health bar](images/unity-graphs/6-6-a-die.png)
+
 7. → **Wait For Seconds** `2` (let the death animation play) → **Game
    Object: Set Active** (`Model`) = false.
+
 8. → **Wait For Seconds** ← `RespawnSeconds`.
 9. → **Nav Mesh Agent: Warp** ← Get Variable `Home`.
+
+![Dying, part 2: wait 2 s, hide the model, wait RespawnSeconds, warp home](images/unity-graphs/6-6-b-wait-and-respawn.png)
+
 10. → **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
     `UpdateBar`.
 11. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
@@ -580,12 +655,16 @@ Wire each from its output on **Switch On String**.
     pose).
 13. → **Set Variable** `State` = `Wander`.
 
+![Dying, part 3: refill Health, show the model and bar, turn the hitbox on, reset the Animator, wander](images/unity-graphs/6-6-c-come-back.png)
+
 ### 6.7 Part F: when you die, it goes home
 1. **On Global Event**, name `PlayerDied`, Arguments `0`.
 2. → **If**: `State` **Equal** `Chase` **Or** `State` **Equal** `Attack`
    (use **Equal** twice and an **Or**).
 3. True → **Set Variable** `State` = `Return` → **Nav Mesh Agent: Set
    Destination** ← `Home`.
+
+![When you die: if State is Chase or Attack, set it to Return and head home](images/unity-graphs/6-7-player-died.png)
 
 ---
 
@@ -662,3 +741,12 @@ Add **Debug: Log** nodes to print values to the Console.
    key; it will tell the enemy graph about a PC hit once step 2 connects them.
 4. Swap the Slime numbers for each enemy type in `shared/rules.js` (Wolf,
    Goblin…), and turn the Enemy into a **prefab** so you can place many.
+
+---
+
+## About the graph pictures
+
+They're drawn by `tools/graph-diagrams/` from a description of each graph in
+`graphs.cjs`. If you change a graph in this guide, change it there too and
+run `node tools/graph-diagrams/render.cjs` (needs Node.js and Playwright with
+Chromium) to redraw the pictures in `docs/images/unity-graphs/`.
