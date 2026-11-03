@@ -20,6 +20,12 @@ SDK's allow list includes everything this guide uses).
 > Slime): enemy 30 HP, 4 damage every 1.6 s; you have 80 HP and your sword
 > does 8 damage; **one swing counts every 2 s**.
 
+**How to use this guide:** go through the parts in order. Each graph step
+has a picture below it; build from the text and check against the picture.
+**Save often**: **File → Save** (Ctrl+S) for the scene, and Ctrl+S in the
+graph window for graphs. Test in Play mode (Part 7.1) after each part of the
+enemy's graph rather than at the very end.
+
 ---
 
 ## Part 0: What you'll end up with
@@ -30,15 +36,16 @@ Hierarchy
 ├── Spawn Point           (where you arrive and respawn)
 ├── GameManager           (graph: your health, death, respawn)
 ├── PlayerHUD             (attached to your head: your health bar)
+│   ├── HUD Bar Background
 │   └── HUD Bar Pivot
 │       └── HUD Bar Fill
 ├── Table                 (the sword rests on it)
 ├── Sword                 (grabbable)
 │   ├── Grip              (where your hand holds it)
 │   ├── Blade             (trigger collider, tag UserTag1)
-│   └── (your sword model)
+│   └── Model             (your sword model)
 └── Enemy                 (graph: wander / chase / attack / hit / die)
-    ├── (your enemy model, with its Animator)
+    ├── Model             (your enemy model, with its Animator)
     └── Health Bar        (turns to face you)
         ├── Bar Background
         └── Bar Pivot
@@ -104,7 +111,9 @@ two ways to start:
   Collider.** Add a small cube as a child at `0, 0.5, 0.5` (a "nose", so you
   can see which way it faces), and remove that cube's collider too.
   **Add Component → Animator** on `Model`, with no Controller. The graph's
-  animation nodes then do nothing, which is fine. Skip 4.4.
+  animation nodes then do nothing, which is fine. Skip 4.4. (The Console
+  will show warnings like "Animator is not playing an AnimatorController"
+  while you play. They're harmless and stop once you add a real model.)
 
 ### 1B.2 What to look for in an enemy pack
 Search the Asset Store (**Window → Asset Store**, or assetstore.unity.com)
@@ -240,8 +249,9 @@ knows):
    the Hierarchy, so it becomes a child. Rename it `Model`. (No pack yet? Use
    the placeholder in 1B.1.)
 2. Set the model's **Position** to `0, 0, 0` and rotate/scale it so **the hilt
-   sits on the Grip** (the thin cylinder) and **the blade points up** (along
-   the Grip's Y axis, the green arrow).
+   sits on the Grip** (the thin cylinder) and **the blade points along the
+   Grip's Y axis** (the green arrow when you select `Grip`; with the sword
+   lying on the table it points sideways, along the table).
 3. If the model came with its own colliders, **remove them** (select each one,
    click the ⋮ on the collider component → **Remove Component**). We add our
    own.
@@ -404,7 +414,8 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
   nodes also have a GameObject box: leave it on **This**. (Shortcut: drag a
   variable from the **Blackboard** panel's **Object** tab onto the graph to
   make a Get node; hold **Alt** while dropping to make a Set node.) Variable
-  nodes are teal.
+  nodes are teal. In the steps below, **Get Variable** and **Set Variable**
+  always mean this Object kind.
 - **Numbers on ports:** click an unconnected input port's box to type a value.
 - **Words and numbers with no box:** some ports (like **Set Variable**'s
   Value, or **Equal**'s A and B) have no box to type into. Add a small
@@ -414,8 +425,8 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
 - **Comparing words:** if an **Equal** or **Not Equal** node shows number
   boxes on A and B, select it and untick **Numeric** in the Graph Inspector.
 - **Expose** (splits a position into X, Y, Z): if you can't find it, use
-  **Vector 3: Get X**, **Get Y** and **Get Z** nodes instead. They do the
-  same job.
+  **Vector 3: Get X**, **Get Y** and **Get Z** nodes instead (or **Vector 2:
+  Get X / Get Y** for a Vector 2). They do the same job.
 - **Save** with Ctrl+S.
 
 **Pictures:** every graph below has a picture drawn in the style of Unity's
@@ -552,10 +563,11 @@ variables, so the four states (6.4) can just read them.
 ![EnemyGraph B, part 2: set the Speed animation parameter, then Switch On String on State](images/unity-graphs/6-3-b-animate-and-switch.png)
 
 ### 6.4 Part C: the four states
-Wire each from its output on **Switch On String**.
-
-Wherever a step below says **PlayerFlat** or **Distance to player**, use a
-**Get Variable** `PlayerFlat` / `PlayerDistance` node.
+Wire each from its output on **Switch On String**. Two reminders:
+- `PlayerFlat` and `PlayerDistance` are the variables Part B saves every
+  frame: read them with **Get Variable**.
+- Setting `State` to a word (`Chase`, `Attack`, `Return`, `Wander`) needs a
+  **String** literal node wired into Set Variable's Value (5.3).
 
 **Wander**
 1. **If**: Get Variable `PlayerDistance` **Less** `AggroRange` →
@@ -563,14 +575,14 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
      ← `RunSpeed`.
    - False: **If**: **Time: Get Time** **Greater** `NextWanderTime` →
      True:
-     1. **Random: Inside Unit Circle** → **Expose Vector 2** (x, y).
+     1. **Random: Get Inside Unit Circle** → **Expose** (Vector 2: x, y).
      2. **Vector 3: Create**: X = x × `WanderRadius`, Y = `0`, Z = y ×
         `WanderRadius` (use **Multiply** nodes).
      3. **Add** (Vector 3) that to Get Variable `Home`.
      4. **Nav Mesh Agent: Set Destination** ← the result.
      5. **Nav Mesh Agent: Set Speed** ← `WalkSpeed`.
-     6. **Set Variable** `NextWanderTime` = Get Time + **Random: Range**
-        (`3`, `6`).
+     6. **Set Variable** `NextWanderTime` = **Add** (Scalar) of Get Time and
+        **Random: Range** (Min `3`, Max `6`).
 
 ![Wander, part 1: chase if PlayerDistance is less than AggroRange; otherwise check whether it's time to move](images/unity-graphs/6-4-wander-a.png)
 
@@ -579,13 +591,14 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
 ![Wander, part 3: walk speed, and NextWanderTime = now + 3 to 6 seconds](images/unity-graphs/6-4-wander-c.png)
 
 **Chase**
-1. **Nav Mesh Agent: Set Destination** ← PlayerFlat → **Nav Mesh Agent: Set
+1. **Nav Mesh Agent: Set Destination** ← Get Variable `PlayerFlat` → **Nav Mesh Agent: Set
    Speed** ← `RunSpeed`. (Setting the speed here too means it runs however
    the chase started, including when you hit it from behind.)
-2. → **If**: **Vector 3: Distance** (Transform position, Get Variable
-   `Home`) **Greater** `LeashRange` → True: **Set Variable** `State` =
-   `Return`. **Nav Mesh Agent: Set Destination** ← `Home`.
-3. False → **If**: Distance to player **Less** `AttackRange` → True:
+2. → **If**: **Vector 3: Distance** (A: **Transform: Get Position** of
+   **This**, B: Get Variable `Home`) **Greater** `LeashRange` → True:
+   **Set Variable** `State` = `Return` → **Nav Mesh Agent: Set Destination**
+   ← Get Variable `Home`.
+3. False → **If**: `PlayerDistance` **Less** `AttackRange` → True:
    **Set Variable** `State` = `Attack` → **Nav Mesh Agent: Reset Path**.
 
 ![Chase, part 1: head for PlayerFlat; past LeashRange from Home, return home](images/unity-graphs/6-4-chase-a.png)
@@ -593,10 +606,13 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
 ![Chase, part 2: within AttackRange, switch to Attack and stop](images/unity-graphs/6-4-chase-b.png)
 
 **Attack**
-1. **Transform: Look At** (target **This**) ← PlayerFlat. (Turns to face you.)
-2. → **If**: Distance to player **Greater** `AttackRange` + `0.5` → True:
+1. **Transform: Look At**, the version with **World Position** (target
+   **This**) ← Get Variable `PlayerFlat`. (Turns to face you.)
+2. → **If**: `PlayerDistance` **Greater** (**Add** (Scalar): `AttackRange` +
+   `0.5`) → True:
    **Set Variable** `State` = `Chase`.
-3. False → **If**: Get Time **Greater** `LastAttackTime` + `AttackEvery` →
+3. False → **If**: Get Time **Greater** (**Add**: `LastAttackTime` +
+   `AttackEvery`) →
    True:
    1. **Set Variable** `LastAttackTime` = Get Time.
    2. **Animator: Set Trigger** (target `Anim`) name `Attack`.
@@ -608,7 +624,8 @@ Wherever a step below says **PlayerFlat** or **Distance to player**, use a
 ![Attack, part 2: every AttackEvery seconds, play Attack and send PlayerHit with Damage](images/unity-graphs/6-4-attack-b.png)
 
 **Return**
-1. **If**: **Vector 3: Distance** (Transform position, `Home`) **Less** `1` →
+1. **If**: **Vector 3: Distance** (A: **Transform: Get Position** of
+   **This**, B: Get Variable `Home`) **Less** `1` →
    True:
    1. **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
       `UpdateBar`.
@@ -632,14 +649,16 @@ enough, the enemy is alive, and 2 s have passed since the last hit.
 ![Getting hit, part 1: is it the sword (tag UserTag1), and is it moving at least MinSwingSpeed?](images/unity-graphs/6-5-a-sword-and-speed.png)
 
 4. True → **If**: Get Variable `State` **Not Equal** `Dead`.
-5. True → **If**: Get Time **Greater** `LastHitTime` + `SwingCooldown`.
+5. True → **If**: Get Time **Greater** (**Add**: `LastHitTime` +
+   `SwingCooldown`).
    (Only one hit counts every 2 s.)
 
 ![Getting hit, part 2: not dead, and SwingCooldown has passed since LastHitTime](images/unity-graphs/6-5-b-alive-and-cooldown.png)
 
 6. True →
    1. **Set Variable** `LastHitTime` = Get Time.
-   2. **Set Variable** `Health` = `Health` − `SwordDamage`.
+   2. **Set Variable** `Health` = **Subtract** (Scalar): `Health` −
+      `SwordDamage`.
    3. **Trigger Custom Event** `UpdateBar`.
    4. **Animator: Set Trigger** (`Anim`) `Hit`.
 
@@ -721,13 +740,17 @@ playing and select `Enemy`. Active wires glow, so you can see which part runs.
 Add **Debug: Log** nodes to print values to the Console.
 
 ### 7.2 Before publishing: the Builder check
-1. **Creator SDK → Builder**. Sign in.
+1. **Save the scene** (File → Save). Open **Creator SDK → Builder** and sign
+   in.
 2. Look at the checklist. **Visual Scripting node support** must pass: it
    lists any node the app won't run. (Play mode doesn't check this, so a graph
    can work in the editor and not in the app.) Everything in this guide is on
    the allow list, but if you added something else, replace it.
 3. Fix anything else the checklist flags (it has **Fix** buttons for most).
-4. **Build & upload**.
+4. Tick **Upload after building**; the button then reads **Build & upload**.
+   Click it. The Builder makes a **private** world (only you can join),
+   which is right for testing. To let friends in later: the world's page on
+   altvr.app → **Edit world** → **Who can join**.
 
 ### 7.3 In the headset
 - [ ] Pick up the sword. Does it sit right in your hand? (If not, rotate the
@@ -758,7 +781,8 @@ Add **Debug: Log** nodes to print values to the Console.
 | Hits register even on gentle touches | Raise `MinSwingSpeed` |
 | Health bar doesn't shrink | `BarPivot` variable points at `Bar Pivot` (not `Bar Fill`)? |
 | Health bar is invisible in the headset | It's showing its back: rotate `Bar Background` and `Bar Pivot` 180° on Y |
-| Works in Play mode, not in the app | The Builder's **Visual Scripting node support** check: a node isn't allowed. Also check the graph is saved and **Build & upload** ran |
+| Works in Play mode, not in the app | The Builder's **Visual Scripting node support** check: a node isn't allowed. Also check the scene and graphs are saved and **Build & upload** ran |
+| A node's wires won't connect, or it shows an error | Select it: the Graph Inspector shows what it expects. Common cause: a word wired into a number port, or a missing literal node on Set Variable's Value |
 | You don't respawn | `SpawnPoint` variable set on GameManager? On Global Event name is exactly `PlayerHit` / Arguments 1? |
 
 ---
