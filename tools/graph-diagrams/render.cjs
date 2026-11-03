@@ -33,7 +33,7 @@ const ICONS = {
     event: ["#3d7a2a", "⟳"],
     math: ["#2f6fa3", "±"],
     logic: ["#a3485a", "?"],
-    variable: ["#6a4fa3", "x"],
+    variable: ["#1f8f8a", "x"],
     transform: ["#3a3a3a", "✣"],
     nav: ["#2f8a7a", "➤"],
     animator: ["#3a5fa3", "▶"],

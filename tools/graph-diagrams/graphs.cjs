@@ -17,15 +17,16 @@ const target = (id = "target") => ({ id, target: true, type: "object" });
 const event = (id, title, ins = [], outs = [flowOut()], extra = {}) =>
     ({ id, kind: "event", title, ins, outs, ...extra });
 
+// Object variable nodes: kind dropdown, name, and the GameObject that holds the variable (This).
 const getVar = (id, name, type = "float") => ({
     id, title: "Get Variable", icon: "variable",
-    ins: [{ dropdown: "Object" }, value("name", "", "string", name)],
+    ins: [{ dropdown: "Object" }, value("name", "", "string", name), target("obj")],
     outs: [spacer, { id: "out", type }]
 });
 
 const setVar = (id, name, type = "float") => ({
     id, title: "Set Variable", icon: "variable",
-    ins: [flowIn, { dropdown: "Object" }, value("name", "", "string", name), value("value", "Value", type)],
+    ins: [flowIn, { dropdown: "Object" }, value("name", "", "string", name), target("obj"), value("value", "Value", type)],
     outs: [flowOut()]
 });
 
@@ -586,7 +587,7 @@ const graphs = [
             setActive("show2", true),
             setColliderEnabled("col", true),
             getVar("anim", "Anim", "object"),
-            action("rebind", "Animator", "Rebind", [target()], "animator"),
+            action("rebind", "Animator", "Play", [target(), value("state", "State Name", "string", "Base Layer.Idle"), value("layer", "Layer", "int", -1)], "animator"),
             literal("wander", "string", "Wander"),
             setVar("st", "State", "string")
         ],

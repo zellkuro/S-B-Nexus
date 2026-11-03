@@ -157,11 +157,11 @@ current terms before you use it.
 ### 1B.5 Fixing common import problems
 | Problem | Fix |
 |---|---|
-| Model is **pink** | The pack was made for the Built-in pipeline. **Window → Rendering → Render Pipeline Converter** → choose **Built-in to URP** → tick **Material Upgrade** → **Initialize And Convert**. If some stay pink: select the material → **Shader** → **Universal Render Pipeline → Lit**, then put the texture back in **Base Map** |
+| Model is **pink** | The pack was made for the Built-in pipeline. **Back up your project first** (the conversion can't be undone). **Window → Rendering → Render Pipeline Converter** → choose **Built-In Render Pipeline to URP** → tick only **Material Upgrade** (untick **Rendering Settings**: your project is already URP) → **Initialize Converters** → **Convert Assets**. If some stay pink: select the material → **Shader** → **Universal Render Pipeline → Lit**, then put the texture back in **Base Map** |
 | Clips **don't play** in the Animator / Animator says "Legacy" | Select the model FBX → Inspector → **Rig** tab → **Animation Type**: **Humanoid** (for two-legged, human-shaped characters) or **Generic** (anything else) → **Apply**. Legacy clips don't work with an Animator Controller |
 | Animations in **separate FBX files** play wrong or not at all | Select each animation FBX → **Rig** tab → same Animation Type as the character. For Humanoid: **Avatar Definition: Copy From Other Avatar** → pick the character's avatar → **Apply** |
 | **Walk/idle stops** after one cycle | Select the clip (or its FBX → **Animation** tab → the clip) → tick **Loop Time** (and **Loop Pose**) → **Apply**. Only idle and walk loop; attack, hit and death don't |
-| Enemy **walks away from its own position** while animating | The walk has root motion. Use an **In Place** version if the pack has one; otherwise keep **Apply Root Motion** unticked on the Animator (4.4 step 6) |
+| Enemy **walks away from its own position** while animating | The walk has root motion. Use an **In Place** version if the pack has one; otherwise keep **Apply Root Motion** unticked on the Animator (4.4 step 6). If the model still drifts or snaps back each loop: select the clip → **Animation** tab → **Root Transform Position (XZ)** → tick **Bake Into Pose** → **Apply** |
 | Model is **lying down** or facing backwards | Rotate the `Model` child (not the `Enemy` root) until it stands up and faces **+Z** |
 
 ### 1B.6 Record what you picked
@@ -211,8 +211,9 @@ knows):
    enemy can walk. If you add obstacles later (rocks, walls, the table in
    3.1), click **Bake** again. **Before re-baking once the enemy exists**, set
    the NavMeshSurface's **Include Layers** to leave out **UserLayer9**
-   (the enemy's layer, Part 4); otherwise the enemy cuts a hole in its own
-   walkable area.
+   (the enemy's layer, Part 4). Baking skips the object with the Nav Mesh
+   Agent, but its model is a child object and could still cut a hole in the
+   walkable area around itself.
 
 ---
 
@@ -305,7 +306,9 @@ parameters**, so any pack works the same way once its clips are mapped.
    Animator window: **Idle**, **Walk** (or Run), **Attack**, **Hit**,
    **Death**. Rename each state to those names (select it → name at the top of
    the Inspector), so the table below matches whatever your pack called them.
-   - Right-click **Idle** → **Set as Layer Default State** (it turns orange).
+   - Right-click **Idle** → **Set as Layer Default State** (Unity's manual
+     calls it **Set As Default**). The default state is shown in
+     orange-brown.
 5. Make the transitions (right-click a state → **Make Transition** → click the
    target state). Select each arrow and set it up in the Inspector:
 
@@ -395,10 +398,13 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
 - **Wires:** drag from an output port (right side) to an input port (left
   side). **Green arrows** are the order things happen in ("flow"); other
   colours carry values (numbers, positions, objects).
-- **Variables:** in the fuzzy finder, type **Get Variable** or **Set
-  Variable**, then pick **Object** as the kind and type the variable's name in
-  the node's text box. (Shortcut: drag a variable from the **Blackboard**
-  panel → Object tab, onto the graph.)
+- **Variables:** in the fuzzy finder, open **Variables → Object** and pick
+  **Get Object Variable** or **Set Object Variable**. Type the variable's
+  name in the node's name box (or pick it from the dropdown). Object variable
+  nodes also have a GameObject box: leave it on **This**. (Shortcut: drag a
+  variable from the **Blackboard** panel's **Object** tab onto the graph to
+  make a Get node; hold **Alt** while dropping to make a Set node.) Variable
+  nodes are teal.
 - **Numbers on ports:** click an unconnected input port's box to type a value.
 - **Words and numbers with no box:** some ports (like **Set Variable**'s
   Value, or **Equal**'s A and B) have no box to type into. Add a small
@@ -407,6 +413,9 @@ left edge. Try it in the Inspector, then set it back to `1, 1, 1`.
   **Literal**. Type the value in it and wire it in.
 - **Comparing words:** if an **Equal** or **Not Equal** node shows number
   boxes on A and B, select it and untick **Numeric** in the Graph Inspector.
+- **Expose** (splits a position into X, Y, Z): if you can't find it, use
+  **Vector 3: Get X**, **Get Y** and **Get Z** nodes instead. They do the
+  same job.
 - **Save** with Ctrl+S.
 
 **Pictures:** every graph below has a picture drawn in the style of Unity's
@@ -433,7 +442,9 @@ Delete the default **On Start** / **On Update** nodes if you don't need them.
 
 **B. On start: fill up**
 1. **On Start** → **Set Variable** `Health` (value: Get Variable `MaxHealth`)
-   → **Trigger Custom Event** (name `UpdateHud`, target: **This**).
+   → **Trigger Custom Event** (under **Events**, right below Custom Event;
+   name `UpdateHud`, target: **This**). The name must match exactly,
+   including capitals.
 
 ![GameManagerGraph B: On Start sets Health to MaxHealth, then triggers UpdateHud](images/unity-graphs/5-4-b-on-start.png)
 
@@ -671,11 +682,13 @@ enough, the enemy is alive, and 2 s have passed since the last hit.
 
 12. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
     **Capsule Collider: Set Enabled** = true.
-13. → **Animator: Rebind** (target `Anim`) (back to Idle, out of the death
-    pose).
+13. → **Animator: Play** (target `Anim`), the version with **State Name** and
+    **Layer**: State Name `Base Layer.Idle`, Layer `-1`. This jumps straight
+    back to Idle, out of the death pose. (Use your state's exact name if it
+    isn't `Idle`.)
 14. → **Set Variable** `State` = `Wander`.
 
-![Dying, part 4: show the model and bar, turn the hitbox on, reset the Animator, wander](images/unity-graphs/6-6-d-come-back.png)
+![Dying, part 4: show the model and bar, turn the hitbox on, jump back to Idle, wander](images/unity-graphs/6-6-d-come-back.png)
 
 ### 6.7 Part F: when you die, it goes home
 1. **On Global Event**, name `PlayerDied`, Arguments `0`.
@@ -738,6 +751,7 @@ Add **Debug: Log** nodes to print values to the Console.
 | Enemy doesn't move | NavMesh baked? (blue overlay on the ground.) Enemy placed on the blue area? Graph saved? A hole in the blue around the enemy: re-bake without **UserLayer9** (2.3) |
 | Can't pick up the sword, or it won't move | `Sword`'s Rigidbody **Is Kinematic** must be off (3.1). The `Grip` must still have its collider and **BS Grab Handle** |
 | Dead enemy jumps up again | Part E step 4: reset the `Hit` and `Attack` triggers before `Die`. In the Animator, the Death state must have no transitions out |
+| Comes back to life still lying down | Part E step 13: **Animator: Play** needs the exact state name, with the layer in front: `Base Layer.Idle` |
 | Enemy slides without animating | `Anim` variable points at the `Model`'s Animator? Parameter named exactly `Speed`? |
 | Enemy floats or sinks | Change the NavMeshAgent's **Base Offset**, or the `Model` child's Y position |
 | Sword hits never register | `Blade` has **Is Trigger** on, Tag **UserTag1**, and is a child of `Sword` (which has the Rigidbody)? Enemy's Capsule Collider **Is Trigger** on? Try moving `Blade` to the **Default** layer |
@@ -765,6 +779,24 @@ Add **Debug: Log** nodes to print values to the Console.
    Goblin…), and turn the Enemy into a **prefab** so you can place many.
 
 ---
+
+## Where this guide's facts come from
+
+Checked against:
+- **Altspace SDK documentation** (altvr.app/docs) and the **SDK's source code**
+  (SideQuestVR/BanterSDK on GitHub): the BS nodes and components, and the
+  Visual Scripting allow list (every Unity node used here is on it).
+- **Unity Visual Scripting 1.9 manual** (the version the SDK uses): event,
+  variable, custom event, switch, logic and wait nodes.
+- **AI Navigation 2.0 manual**: NavMesh Surface and Nav Mesh Agent.
+- **Unity 6000.3 manual and scripting reference**: Animator transitions and
+  parameters, model import (Rig, Animation and Model tabs), Rigidbody
+  (kinematic bodies, velocity), trigger messages, and the Render Pipeline
+  Converter.
+
+Not covered by those manuals, so worth a second look if Unity shows
+something different: the exact fuzzy-finder wording for literal nodes, the
+**Equal** node's Numeric option, and the **Expose** node (fallback above).
 
 ## About the graph pictures
 
