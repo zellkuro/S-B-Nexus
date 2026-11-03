@@ -78,6 +78,12 @@ How the pieces talk:
    double-click it with the project open, and click **Import**.
 4. Open **Creator SDK → Setup**. Click **Fix All**. This sets up the layers
    and tags the app expects (including `UserLayer9` and `UserTag1`, used below).
+
+   > **Layer and tag names vs numbers:** this guide always uses the **names**.
+   > They don't match Unity's slot numbers: `UserLayer9` is in **slot 13**
+   > ("User Layer 13" in **Edit → Project Settings → Tags and Layers**), and
+   > "User Layer 9" is actually `UserLayer5`. Likewise `UserTag1` is "Tag 0".
+   > In the Inspector's **Layer** and **Tag** dropdowns, pick by name.
 5. In the same Setup panel, find **Visual Scripting nodes** and click
    **Generate nodes**. Wait for it to finish (it can take a minute or two).
 6. Check the NavMesh package is installed: **Window → Package Manager** →
@@ -264,7 +270,7 @@ knows):
 2. **Add Component → Box Collider**. Tick **Is Trigger**. Set its **Size** and
    **Center** so the green box covers the blade of your model (look in the
    Scene view).
-3. Set `Blade`'s **Layer** to **UserLayer9**. (Teleport and the grapple
+3. Set `Blade`'s **Layer** to **UserLayer9** (slot 13, picked by name). (Teleport and the grapple
    ignore this layer, and grabbing only looks at the Grabbable layer, so the
    blade never gets in the way of picking the sword up by its grip.)
 4. Set `Blade`'s **Tag** to **UserTag1**. That's how the enemy knows "this is
@@ -297,7 +303,7 @@ knows):
 1. Still on `Enemy` → **Add Component → Capsule Collider**.
 2. Tick **Is Trigger**. Set **Center**, **Radius** and **Height** to cover the
    model's body.
-3. Set `Enemy`'s **Layer** to **UserLayer9** (choose **Yes, change children**
+3. Set `Enemy`'s **Layer** to **UserLayer9** (slot 13; choose **Yes, change children**
    this time; it's fine for the model too).
 
 ### 4.4 Animator (your model's animations)
@@ -777,7 +783,7 @@ Add **Debug: Log** nodes to print values to the Console.
 | Comes back to life still lying down | Part E step 13: **Animator: Play** needs the exact state name, with the layer in front: `Base Layer.Idle` |
 | Enemy slides without animating | `Anim` variable points at the `Model`'s Animator? Parameter named exactly `Speed`? |
 | Enemy floats or sinks | Change the NavMeshAgent's **Base Offset**, or the `Model` child's Y position |
-| Sword hits never register | `Blade` has **Is Trigger** on, Tag **UserTag1**, and is a child of `Sword` (which has the Rigidbody)? Enemy's Capsule Collider **Is Trigger** on? Try moving `Blade` to the **Default** layer |
+| Sword hits never register | `Blade` and `Enemy` both on the layer **named** `UserLayer9` (slot 13, not slot 9)? `Blade` has **Is Trigger** on, Tag **UserTag1**, and is a child of `Sword` (which has the Rigidbody)? Enemy's Capsule Collider **Is Trigger** on? Try moving `Blade` to the **Default** layer |
 | Hits register even on gentle touches | Raise `MinSwingSpeed` |
 | Health bar doesn't shrink | `BarPivot` variable points at `Bar Pivot` (not `Bar Fill`)? |
 | Health bar is invisible in the headset | It's showing its back: rotate `Bar Background` and `Bar Pivot` 180° on Y |
