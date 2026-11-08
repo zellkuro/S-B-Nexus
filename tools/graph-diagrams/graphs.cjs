@@ -98,6 +98,11 @@ const setColliderEnabled = (id, on) => action(id, "Capsule Collider", "Set Enabl
 const wait = (id, seconds) => action(id, null, "Wait For Seconds",
     [value("delay", "Delay", "float", seconds), { id: "unscaled", label: "Unscaled", type: "bool", check: false }], "time");
 
+const setBool = (id, name, on) => action(id, "Animator", "Set Bool",
+    [target(), value("name", "Name", "string", name), { id: "value", label: "Value", type: "bool", check: on }], "animator");
+const resetTrigger = (id, name) => action(id, "Animator", "Reset Trigger", [target(), value("name", "Name", "string", name)], "animator");
+const randomValue = (id) => member(id, "Random", "Get Value", [], [{ id: "out", type: "float" }], "random");
+
 // "Update the bar" custom event, used for the HUD and the enemy's bar.
 function barGraph(id, title, eventName, pivotName) {
     return {
@@ -249,18 +254,19 @@ const graphs = [
             {
                 id: "sw", title: "Switch On String", icon: "logic",
                 ins: [flowIn, value("sel", "Selector", "string")],
-                outs: ["Wander", "Chase", "Attack", "Return", "Default"].map((o) => flowOut(o.toLowerCase(), o))
+                outs: ["Wander", "Chase", "Attack", "Block", "Return", "Default"].map((o) => flowOut(o.toLowerCase(), o))
             },
             note("w", "Wander (6.4)", { flowIn: true }),
             note("c", "Chase (6.4)", { flowIn: true }),
             note("a", "Attack (6.4)", { flowIn: true }),
+            note("b", "Block (6.4)", { flowIn: true }),
             note("r", "Return (6.4)", { flowIn: true }),
             note("d", "Default: nothing (Dead)", { flowIn: true })
         ],
         edges: [
             "from.out>sf.in", "anim.out>sf.target", "vel.out>mag.v", "mag.out>sf.value",
             "sf.out>sw.in", "state.out>sw.sel",
-            "sw.wander>w.in", "sw.chase>c.in", "sw.attack>a.in", "sw.return>r.in", "sw.default>d.in"
+            "sw.wander>w.in", "sw.chase>c.in", "sw.attack>a.in", "sw.block>b.in", "sw.return>r.in", "sw.default>d.in"
         ]
     },
 
@@ -390,7 +396,7 @@ const graphs = [
         ]
     },
     {
-        id: "6-4-attack-b", title: "EnemyGraph · C. Attack (2 of 2): hit you every 1.6 s",
+        id: "6-4-attack-b-shield-or-swing", title: "EnemyGraph · C. Attack (2 of 4): ready to act? Shield or swing",
         nodes: [
             note("from", "From the If's False output (previous picture)", { flowOut: true }),
             getTime("time"),
@@ -399,17 +405,75 @@ const graphs = [
             math("add", "Add", "+"),
             compare("gt", "Greater", ">"),
             ifNode("if"),
-            getTime("time2"),
+            randomValue("rnd"),
+            getVar("chance", "BlockChance"),
+            compare("lt", "Less", "<"),
+            ifNode("if2"),
+            note("shield", "True: raise the shield (next picture).", { flowIn: true }),
+            note("swing", "False: swing (the picture after).", { flowIn: true })
+        ],
+        edges: [
+            "from.out>if.in", "time.out>gt.a", "last.out>add.a", "every.out>add.b", "add.out>gt.b", "gt.out>if.cond",
+            "if.t>if2.in", "rnd.out>lt.a", "chance.out>lt.b", "lt.out>if2.cond", "if2.t>shield.in", "if2.f>swing.in"
+        ]
+    },
+    {
+        id: "6-4-attack-c-raise-shield", title: "EnemyGraph · C. Attack (3 of 4): raise the shield",
+        nodes: [
+            note("from", "From the second If's True output (previous picture)", { flowOut: true }),
+            literal("block", "string", "Block"),
+            setVar("st", "State", "string"),
+            getTime("time"),
+            getVar("dur", "BlockDuration"),
+            math("add", "Add", "+"),
+            setVar("until", "BlockUntil"),
+            getVar("anim", "Anim", "object"),
+            setBool("up", "Blocking", true)
+        ],
+        edges: [
+            "from.out>st.in", "block.out>st.value", "st.out>until.in", "time.out>add.a", "dur.out>add.b",
+            "add.out>until.value", "until.out>up.in", "anim.out>up.target"
+        ]
+    },
+    {
+        id: "6-4-attack-d-swing", title: "EnemyGraph · C. Attack (4 of 4): a random swing, and hit you",
+        nodes: [
+            note("from", "From the second If's False output (two pictures back)", { flowOut: true }),
+            getTime("time"),
             setVar("set", "LastAttackTime"),
             getVar("anim", "Anim", "object"),
+            member("rr", "Random", "Range (Integer)", [value("min", "Min", "int", 0), value("max", "Max", "int", 3)], [{ id: "out", type: "int" }], "random"),
+            action("idx", "Animator", "Set Integer", [target(), value("name", "Name", "string", "AttackIndex"), value("value", "Value", "int")], "animator"),
             setTrigger("trig", "Attack"),
             getVar("dmg", "Damage"),
             triggerGlobal("hit", "PlayerHit", 1)
         ],
         edges: [
-            "from.out>if.in", "time.out>gt.a", "last.out>add.a", "every.out>add.b", "add.out>gt.b", "gt.out>if.cond",
-            "if.t>set.in", "time2.out>set.value", "set.out>trig.in", "anim.out>trig.target",
-            "trig.out>hit.in", "dmg.out>hit.arg0"
+            "from.out>set.in", "time.out>set.value", "set.out>idx.in", "anim.out>idx.target", "rr.out>idx.value",
+            "idx.out>trig.in", "anim.out>trig.target", "trig.out>hit.in", "dmg.out>hit.arg0"
+        ]
+    },
+    {
+        id: "6-4-block", title: "EnemyGraph · C. Block: shield up until BlockUntil, then a window to strike",
+        nodes: [
+            note("from", "From Switch On String: Block", { flowOut: true }),
+            getVar("pf", "PlayerFlat", "vector3"),
+            member("look", "Transform", "Look At", [flowIn, target(), value("pos", "World Position", "vector3")], [flowOut()], "transform"),
+            getTime("time"),
+            getVar("until", "BlockUntil"),
+            compare("gt", "Greater", ">"),
+            ifNode("if"),
+            getVar("anim", "Anim", "object"),
+            setBool("down", "Blocking", false),
+            getTime("time2"),
+            setVar("last", "LastAttackTime"),
+            literal("atk", "string", "Attack"),
+            setVar("st", "State", "string")
+        ],
+        edges: [
+            "from.out>look.in", "pf.out>look.pos", "look.out>if.in", "time.out>gt.a", "until.out>gt.b", "gt.out>if.cond",
+            "if.t>down.in", "anim.out>down.target", "down.out>last.in", "time2.out>last.value",
+            "last.out>st.in", "atk.out>st.value"
         ]
     },
 
@@ -480,9 +544,28 @@ const graphs = [
         ]
     },
     {
-        id: "6-5-c-take-damage", title: "EnemyGraph · D. Getting hit (3 of 4): take the damage",
+        id: "6-5-c-shield", title: "EnemyGraph · D. Getting hit (3 of 5): shield up? Blocked",
         nodes: [
             note("from", "From the second If's True output (previous picture)", { flowOut: true }),
+            getVar("state", "State", "string"),
+            literal("block", "string", "Block"),
+            compare("eq", "Equal", "=", undefined, undefined, "any"),
+            ifNode("if"),
+            getTime("time"),
+            setVar("last", "LastHitTime"),
+            getVar("anim", "Anim", "object"),
+            setTrigger("trig", "BlockHit"),
+            note("next", "False: not blocked. Continues in the next picture.", { flowIn: true })
+        ],
+        edges: [
+            "from.out>if.in", "state.out>eq.a", "block.out>eq.b", "eq.out>if.cond",
+            "if.t>last.in", "time.out>last.value", "last.out>trig.in", "anim.out>trig.target", "if.f>next.in"
+        ]
+    },
+    {
+        id: "6-5-d-take-damage", title: "EnemyGraph · D. Getting hit (4 of 5): take the damage",
+        nodes: [
+            note("from", "From the If's False output (previous picture)", { flowOut: true }),
             getTime("time"),
             setVar("last", "LastHitTime"),
             getVar("hp", "Health"),
@@ -500,9 +583,9 @@ const graphs = [
         ]
     },
     {
-        id: "6-5-d-fight-back-or-die", title: "EnemyGraph · D. Getting hit (4 of 4): fight back, or die",
+        id: "6-5-e-fight-back-or-die", title: "EnemyGraph · D. Getting hit (5 of 5): fight back, or die",
         nodes: [
-            note("from", "From Animator: Set Trigger (previous picture)", { flowOut: true }),
+            note("from", "From Animator: Set Trigger Hit (previous picture)", { flowOut: true }),
             getVar("state", "State", "string"),
             literal("wander", "string", "Wander"),
             compare("eq", "Equal", "=", undefined, undefined, "any"),
@@ -524,7 +607,7 @@ const graphs = [
 
     // ---------------- 6.6 Part E ----------------
     {
-        id: "6-6-a-die", title: "EnemyGraph · E. Dying (1 of 4): stop, and play the death animation",
+        id: "6-6-a-die", title: "EnemyGraph · E. Dying (1 of 5): stop, and lower the shield",
         nodes: [
             event("ev", "Custom Event", [target(), value("name", "", "string", "Die")], [flowOut()]),
             note("co", "Select this node and tick Coroutine in the Graph Inspector."),
@@ -532,18 +615,29 @@ const graphs = [
             setVar("st", "State", "string"),
             resetPath("stop"),
             getVar("anim", "Anim", "object"),
-            action("rh", "Animator", "Reset Trigger", [target(), value("name", "Name", "string", "Hit")], "animator"),
-            action("ra", "Animator", "Reset Trigger", [target(), value("name", "Name", "string", "Attack")], "animator"),
+            setBool("down", "Blocking", false),
+            note("next", "Continues in the next picture.", { flowIn: true })
+        ],
+        edges: ["ev.out>st.in", "dead.out>st.value", "st.out>stop.in", "stop.out>down.in", "anim.out>down.target", "down.out>next.in"]
+    },
+    {
+        id: "6-6-b-death-animation", title: "EnemyGraph · E. Dying (2 of 5): clear leftover animations, play Death",
+        nodes: [
+            note("from", "From Animator: Set Bool Blocking (previous picture)", { flowOut: true }),
+            getVar("anim", "Anim", "object"),
+            resetTrigger("rh", "Hit"),
+            resetTrigger("ra", "Attack"),
+            resetTrigger("rb", "BlockHit"),
             setTrigger("trig", "Die"),
             note("next", "Continues in the next picture.", { flowIn: true })
         ],
         edges: [
-            "ev.out>st.in", "dead.out>st.value", "st.out>stop.in", "stop.out>rh.in", "anim.out>rh.target",
-            "rh.out>ra.in", "anim.out>ra.target", "ra.out>trig.in", "anim.out>trig.target", "trig.out>next.in"
+            "from.out>rh.in", "anim.out>rh.target", "rh.out>ra.in", "anim.out>ra.target", "ra.out>rb.in",
+            "anim.out>rb.target", "rb.out>trig.in", "anim.out>trig.target", "trig.out>next.in"
         ]
     },
     {
-        id: "6-6-b-vanish", title: "EnemyGraph · E. Dying (2 of 4): stop being hittable, then vanish",
+        id: "6-6-c-vanish", title: "EnemyGraph · E. Dying (3 of 5): stop being hittable, then vanish",
         nodes: [
             note("from", "From Animator: Set Trigger Die (previous picture)", { flowOut: true }),
             setColliderEnabled("col", false),
@@ -560,7 +654,7 @@ const graphs = [
         ]
     },
     {
-        id: "6-6-c-respawn", title: "EnemyGraph · E. Dying (3 of 4): wait, then go home healed",
+        id: "6-6-d-respawn", title: "EnemyGraph · E. Dying (4 of 5): wait, then go home healed",
         nodes: [
             note("from", "From Game Object: Set Active (previous picture)", { flowOut: true }),
             getVar("resp", "RespawnSeconds"),
@@ -578,7 +672,7 @@ const graphs = [
         ]
     },
     {
-        id: "6-6-d-come-back", title: "EnemyGraph · E. Dying (4 of 4): come back to life",
+        id: "6-6-e-come-back", title: "EnemyGraph · E. Dying (5 of 5): come back to life",
         nodes: [
             note("from", "From Trigger Custom Event UpdateBar (previous picture)", { flowOut: true }),
             getVar("model", "Model", "object"),
@@ -587,13 +681,13 @@ const graphs = [
             setActive("show2", true),
             setColliderEnabled("col", true),
             getVar("anim", "Anim", "object"),
-            action("rebind", "Animator", "Play", [target(), value("state", "State Name", "string", "Base Layer.Idle"), value("layer", "Layer", "int", -1)], "animator"),
+            action("play", "Animator", "Play", [target(), value("state", "State Name", "string", "Base Layer.Idle"), value("layer", "Layer", "int", -1)], "animator"),
             literal("wander", "string", "Wander"),
             setVar("st", "State", "string")
         ],
         edges: [
             "from.out>show.in", "model.out>show.target", "show.out>show2.in", "bar.out>show2.target",
-            "show2.out>col.in", "col.out>rebind.in", "anim.out>rebind.target", "rebind.out>st.in", "wander.out>st.value"
+            "show2.out>col.in", "col.out>play.in", "anim.out>play.target", "play.out>st.in", "wander.out>st.value"
         ]
     },
 
@@ -602,23 +696,23 @@ const graphs = [
         id: "6-7-player-died", title: "EnemyGraph · F. When you die, it goes home",
         nodes: [
             onGlobal("ev", "PlayerDied"),
-            getVar("s1", "State", "string"),
-            literal("c", "string", "Chase"),
-            compare("eq1", "Equal", "=", undefined, undefined, "any"),
-            getVar("s2", "State", "string"),
-            literal("a", "string", "Attack"),
-            compare("eq2", "Equal", "=", undefined, undefined, "any"),
-            { id: "or", title: "Or", icon: "logic", ins: [value("a", "A", "bool"), value("b", "B", "bool")], outs: [{ id: "out", label: "A | B", type: "bool" }] },
-            ifNode("if"),
+            getVar("state", "State", "string"),
+            {
+                id: "sw", title: "Switch On String", icon: "logic",
+                ins: [flowIn, value("sel", "Selector", "string")],
+                outs: ["Chase", "Attack", "Block", "Default"].map((o) => flowOut(o.toLowerCase(), o))
+            },
+            getVar("anim", "Anim", "object"),
+            setBool("down", "Blocking", false),
             literal("ret", "string", "Return"),
             setVar("st", "State", "string"),
             getVar("home", "Home", "vector3"),
             setDestination("dest")
         ],
         edges: [
-            "ev.out>if.in", "s1.out>eq1.a", "c.out>eq1.b", "s2.out>eq2.a", "a.out>eq2.b",
-            "eq1.out>or.a", "eq2.out>or.b", "or.out>if.cond",
-            "if.t>st.in", "ret.out>st.value", "st.out>dest.in", "home.out>dest.dest"
+            "ev.out>sw.in", "state.out>sw.sel",
+            "sw.chase>down.in", "sw.attack>down.in", "sw.block>down.in", "anim.out>down.target",
+            "down.out>st.in", "ret.out>st.value", "st.out>dest.in", "home.out>dest.dest"
         ]
     }
 ];

@@ -1,10 +1,12 @@
-# Your First Scene: A Sword and an Enemy (Visual Scripting)
+# Your First Scene: A Sword and an Enemy Knight (Visual Scripting)
 
 A step-by-step guide to building, in Unity with Visual Scripting only:
 
 - a **sword** you can pick up and swing,
-- an **enemy** that **wanders** around its home, **chases** you when you get
-  close, **attacks**, and has a **health bar** over its head,
+- an **enemy knight** with sword and shield that **wanders** around its home,
+  **chases** you when you get close, **attacks** with a random sword swing,
+  sometimes **raises its shield** to block your hits, and has a **health
+  bar** over its head,
 - **your health**, shown under your view, and a **respawn** in town when it
   runs out.
 
@@ -17,8 +19,9 @@ components plus Visual Scripting graphs, using only nodes the app allows (the
 SDK's allow list includes everything this guide uses).
 
 > Numbers in this guide come from `shared/rules.js` (a level 1 player vs a
-> Slime): enemy 30 HP, 4 damage every 1.6 s; you have 80 HP and your sword
-> does 8 damage; **one swing counts every 2 s**.
+> level 1 enemy): enemy 30 HP, 4 damage every 1.6 s; you have 80 HP and your
+> sword does 8 damage; **one swing counts every 2 s**. The knight raises its
+> shield instead of attacking 35% of the time, for 2 s.
 
 **How to use this guide:** go through the parts in order. Each graph step
 has a picture below it; build from the text and check against the picture.
@@ -44,8 +47,8 @@ Hierarchy
 │   ├── Grip              (where your hand holds it)
 │   ├── Blade             (trigger collider, tag UserTag1)
 │   └── Model             (your sword model)
-└── Enemy                 (graph: wander / chase / attack / hit / die)
-    ├── Model             (your enemy model, with its Animator)
+└── Enemy                 (graph: wander / chase / attack / block / hit / die)
+    ├── Model             (your knight model, with its Animator)
     └── Health Bar        (turns to face you)
         ├── Bar Background
         └── Bar Pivot
@@ -56,7 +59,9 @@ How the pieces talk:
 
 ```
  Sword Blade ──touches──► Enemy (On BS Trigger Enter)
-                            │  fast enough? 2 s since last hit? → lose 8 HP, update bar
+                            │  fast enough? 2 s since last hit?
+                            │  shield up → blocked (no damage)
+                            │  otherwise → lose 8 HP, update bar
                             │
  Enemy graph ──"PlayerHit" (4)──► GameManager graph
                                      │  lose 4 HP, update HUD
@@ -98,8 +103,8 @@ How the pieces talk:
 
 ## Part 1B: Choose and import your models
 
-You need two things: a **sword** and an **enemy with animations**. There are
-two ways to start:
+You need two things: a **sword** for you, and an **enemy knight with sword and
+shield animations**. There are two ways to start:
 
 - **No models yet?** Use simple shapes (1B.1) and build the whole scene with
   them. The logic doesn't care what things look like; swap in real models
@@ -131,7 +136,7 @@ Check the pack's page before you get it:
 
 | Check | Why | Where on the page |
 |---|---|---|
-| **Animated**, with at least **idle, walk (or run), attack, hit (or "damage"/"get hit"), death** | The graph uses these five | Description, screenshots, or an "Animations" list |
+| **Animated**, with at least **idle, walk (or run), 1–3 sword attacks, shield block (a pose or loop), block impact, hit (or "damage"/"get hit"), death** | The graph uses all of these (4.4) | Description, screenshots, or an "Animations" list |
 | **URP** compatible | Our project uses URP; other packs show up pink until converted (1B.5) | "Render pipeline compatibility" table |
 | **Low poly**: under ~10,000 triangles per character, textures 2048 or smaller (1024 is better), 1–2 materials | Must run on Quest headsets | Description ("tris", "polys", "texture size"), or "mobile" in the title |
 | Works with **Unity 6** | Older packs often still work, but check | "Supported Unity versions" |
@@ -187,9 +192,17 @@ knows):
 |---|---|---|
 | Idle | | yes |
 | Walk (or Run) | | yes |
-| Attack | | no |
+| Swing 1 | | no |
+| Swing 2 | | no |
+| Swing 3 (your combo or heavy attack works well here) | | no |
+| Block (shield up; the held pose or loop) | | yes |
+| Block Impact (a hit landing on the shield) | | no |
 | Hit | | no |
 | Death | | no |
+
+**Your pack has "block start" / "block end" clips as well as the loop?** Use
+just the loop for Block to begin with; the Animator blends in and out of it.
+You can add the start and end clips later as extra states.
 
 **Missing one?**
 - No **Hit**: leave the Hit state out in 4.4. The `Hit` trigger then does
@@ -197,6 +210,10 @@ knows):
 - No **Walk** but a **Run**: use Run, and raise `WalkSpeed` in the graph
   (6.1) so it doesn't look like running in slow motion.
 - No **Death**: leave it out; the enemy simply disappears 2 s after dying.
+- Only **one or two swings**: use them for Swing 1 (and 2), and set the
+  **Random: Range** Max in 6.4 (Attack, part 4) to the number of swings you
+  have (`1` or `2`).
+- No **Block Impact**: leave it out; blocked hits just don't hurt.
 
 > **Don't commit Asset Store files to this GitHub repo.** It's public, and the
 > Asset Store licence lets you use the assets in your game but not share the
@@ -306,40 +323,78 @@ knows):
 3. Set `Enemy`'s **Layer** to **UserLayer9** (slot 13; choose **Yes, change children**
    this time; it's fine for the model too).
 
-### 4.4 Animator (your model's animations)
-Uses the clips you found in **1B.4–1B.6**. We drive them with **4
+### 4.4 Animator (your knight's animations)
+Uses the clips you found in **1B.4–1B.6**. The graph drives them with **7
 parameters**, so any pack works the same way once its clips are mapped.
 
 1. **Project window** → right-click in your own folder → **Create → Animator
    Controller**. Name it `EnemyController`.
 2. Double-click it to open the **Animator** window.
 3. In the **Parameters** tab (left), click **+** and add:
-   - `Speed` (**Float**)
-   - `Attack` (**Trigger**)
-   - `Hit` (**Trigger**)
-   - `Die` (**Trigger**)
-4. Drag the five clips you listed in **1B.6** from the Project window into the
-   Animator window: **Idle**, **Walk** (or Run), **Attack**, **Hit**,
-   **Death**. Rename each state to those names (select it → name at the top of
-   the Inspector), so the table below matches whatever your pack called them.
+
+   | Parameter | Type | What the graph does with it |
+   |---|---|---|
+   | `Speed` | **Float** | Sets it to how fast the knight moves (walk animation) |
+   | `Attack` | **Trigger** | Fires a swing |
+   | `AttackIndex` | **Int** | Which swing: `0`, `1` or `2`, set just before `Attack` |
+   | `Blocking` | **Bool** | On while the shield is up |
+   | `BlockHit` | **Trigger** | Your sword hit the raised shield |
+   | `Hit` | **Trigger** | Your sword hit the knight |
+   | `Die` | **Trigger** | Health reached 0 |
+
+4. Drag the clips you listed in **1B.6** from the Project window into the
+   Animator window, and rename each state (select it → name at the top of the
+   Inspector) to: **Idle**, **Walk**, **Swing 1**, **Swing 2**, **Swing 3**,
+   **Block**, **Block Impact**, **Hit**, **Death**. The tables below use
+   these names, whatever your pack called the clips.
    - Right-click **Idle** → **Set as Layer Default State** (Unity's manual
      calls it **Set As Default**). The default state is shown in
      orange-brown.
 5. Make the transitions (right-click a state → **Make Transition** → click the
-   target state). Select each arrow and set it up in the Inspector:
+   target state; **Any State** is the box already in the window). Select each
+   arrow and set it up in the Inspector. To add a condition, click **+** under
+   **Conditions**; two conditions on one arrow must both be true.
 
-   | From → To | Has Exit Time | Condition |
+   **Moving:**
+
+   | From → To | Has Exit Time | Conditions |
    |---|---|---|
    | Idle → Walk | off | `Speed` Greater `0.1` |
    | Walk → Idle | off | `Speed` Less `0.1` |
-   | **Any State** → Attack | off | `Attack` |
-   | Attack → Idle | **on** (Exit Time `1`) | none |
+
+   **Swings** (from Any State, so they can start from Idle or Walk):
+
+   | From → To | Has Exit Time | Conditions |
+   |---|---|---|
+   | **Any State** → Swing 1 | off | `Attack`, and `AttackIndex` Equals `0` |
+   | **Any State** → Swing 2 | off | `Attack`, and `AttackIndex` Equals `1` |
+   | **Any State** → Swing 3 | off | `Attack`, and `AttackIndex` Equals `2` |
+   | Swing 1 → Idle | **on** (Exit Time `1`) | none |
+   | Swing 2 → Idle | **on** (Exit Time `1`) | none |
+   | Swing 3 → Idle | **on** (Exit Time `1`) | none |
+
+   **Shield** (from Idle and Walk, *not* from Any State: an Any State arrow
+   would keep restarting Block while `Blocking` is on, cutting off Block
+   Impact):
+
+   | From → To | Has Exit Time | Conditions |
+   |---|---|---|
+   | Idle → Block | off | `Blocking` true |
+   | Walk → Block | off | `Blocking` true |
+   | Block → Idle | off | `Blocking` false |
+   | Block → Block Impact | off | `BlockHit` |
+   | Block Impact → Block | **on** (Exit Time `1`) | none |
+
+   **Hurt and dying:**
+
+   | From → To | Has Exit Time | Conditions |
+   |---|---|---|
    | **Any State** → Hit | off | `Hit` |
    | Hit → Idle | **on** (Exit Time `1`) | none |
    | **Any State** → Death | off | `Die` |
 
-   For the three **Any State** arrows, untick **Can Transition To Self**.
-   Death has no way out: it stays dead until we reset it.
+   For every **Any State** arrow, untick **Can Transition To Self**. Death
+   has no way out: it stays dead until the graph resets it.
 6. Select `Model` (the child) → its **Animator** component (add one if it
    doesn't have it) → set **Controller** to `EnemyController`. **Untick Apply
    Root Motion** (the NavMeshAgent moves the enemy, not the animation).
@@ -499,7 +554,7 @@ That's your health done. Later, `PlayerDied` is also where the backend's
 
    | Name | Type | Value | What it's for |
    |---|---|---|---|
-   | `State` | String | `Wander` | Wander, Chase, Attack, Return or Dead |
+   | `State` | String | `Wander` | Wander, Chase, Attack, Block, Return or Dead |
    | `MaxHealth` | Float | `30` | |
    | `Health` | Float | `30` | |
    | `Home` | Vector 3 | (set at start) | Where it lives |
@@ -511,6 +566,9 @@ That's your health done. Later, `PlayerDied` is also where the backend's
    | `RunSpeed` | Float | `3` | |
    | `Damage` | Float | `4` | Per attack |
    | `AttackEvery` | Float | `1.6` | Seconds between attacks |
+   | `BlockChance` | Float | `0.35` | Chance (0 to 1) it raises its shield instead of swinging |
+   | `BlockDuration` | Float | `2` | Seconds the shield stays up |
+   | `BlockUntil` | Float | `0` | (used by the graph) When to lower the shield |
    | `SwordDamage` | Float | `8` | Per hit you land |
    | `MinSwingSpeed` | Float | `1.5` | m/s: slower is a touch, not a hit |
    | `SwingCooldown` | Float | `2` | Only one hit counts every 2 s |
@@ -528,7 +586,7 @@ That's your health done. Later, `PlayerDied` is also where the backend's
 > Nav Mesh Agent and Capsule Collider nodes work on **this** object by
 > default (the Enemy), so they don't need variables.
 
-The graph has six parts. Build them one at a time and test as you go
+The graph has six parts (Part C has five states). Build them one at a time and test as you go
 (Part 7). Use **Groups** (Ctrl+drag a box around nodes → name it) to keep
 them tidy.
 
@@ -564,15 +622,16 @@ variables, so the four states (6.4) can just read them.
    plays the walk animation when it moves.
 4. → **Switch On String**. Its Selector: Get Variable `State`. Select the
    node, and in the Graph Inspector add the options `Wander`, `Chase`,
-   `Attack`, `Return`. (`Dead` isn't listed, so a dead enemy does nothing.)
+   `Attack`, `Block`, `Return`. (`Dead` isn't listed, so a dead enemy does
+   nothing.)
 
-![EnemyGraph B, part 2: set the Speed animation parameter, then Switch On String on State](images/unity-graphs/6-3-b-animate-and-switch.png)
+![EnemyGraph B, part 2: set the Speed animation parameter, then Switch On String on State, with a Block option](images/unity-graphs/6-3-b-animate-and-switch.png)
 
-### 6.4 Part C: the four states
+### 6.4 Part C: the five states
 Wire each from its output on **Switch On String**. Two reminders:
 - `PlayerFlat` and `PlayerDistance` are the variables Part B saves every
   frame: read them with **Get Variable**.
-- Setting `State` to a word (`Chase`, `Attack`, `Return`, `Wander`) needs a
+- Setting `State` to a word (`Chase`, `Attack`, `Block`, `Return`, `Wander`) needs a
   **String** literal node wired into Set Variable's Value (5.3).
 
 **Wander**
@@ -617,17 +676,47 @@ Wire each from its output on **Switch On String**. Two reminders:
 2. → **If**: `PlayerDistance` **Greater** (**Add** (Scalar): `AttackRange` +
    `0.5`) → True:
    **Set Variable** `State` = `Chase`.
-3. False → **If**: Get Time **Greater** (**Add**: `LastAttackTime` +
-   `AttackEvery`) →
-   True:
-   1. **Set Variable** `LastAttackTime` = Get Time.
-   2. **Animator: Set Trigger** (target `Anim`) name `Attack`.
-   3. **Trigger Global Event**, name `PlayerHit`, **Arguments** `1`,
-      `argument_0` ← Get Variable `Damage`.
 
 ![Attack, part 1: look at you; if you're more than AttackRange + 0.5 away, chase again](images/unity-graphs/6-4-attack-a.png)
 
-![Attack, part 2: every AttackEvery seconds, play Attack and send PlayerHit with Damage](images/unity-graphs/6-4-attack-b.png)
+3. False → **If**: Get Time **Greater** (**Add**: `LastAttackTime` +
+   `AttackEvery`) → True (ready to act):
+4. → **If**: **Random: Get Value** (a random number from 0 to 1) **Less**
+   `BlockChance`. True raises the shield (step 5), False swings (step 6).
+
+![Attack, part 2: when it's ready to act, a random number below BlockChance means shield, otherwise swing](images/unity-graphs/6-4-attack-b-shield-or-swing.png)
+
+5. **Raise the shield** (from step 4's True):
+   1. **Set Variable** `State` = `Block`.
+   2. → **Set Variable** `BlockUntil` = **Add**: Get Time + `BlockDuration`.
+   3. → **Animator: Set Bool** (target `Anim`), name `Blocking`, value
+      ticked (true).
+
+![Attack, part 3: State Block, BlockUntil = now + BlockDuration, Animator Blocking on](images/unity-graphs/6-4-attack-c-raise-shield.png)
+
+6. **Swing** (from step 4's False):
+   1. **Set Variable** `LastAttackTime` = Get Time.
+   2. → **Animator: Set Integer** (target `Anim`), name `AttackIndex`,
+      value **Random: Range**, the **whole-number** version (Integer Min,
+      Max): Min `0`, Max `3`. (The maximum is left out, so this picks 0, 1
+      or 2. With fewer swings, set Max to how many you have.)
+   3. → **Animator: Set Trigger** (`Anim`) `Attack`.
+   4. → **Trigger Global Event**, name `PlayerHit`, **Arguments** `1`,
+      `argument_0` ← Get Variable `Damage`.
+
+![Attack, part 4: save LastAttackTime, pick swing 0–2 at random, play Attack, send PlayerHit with Damage](images/unity-graphs/6-4-attack-d-swing.png)
+
+**Block** (the shield is up)
+1. **Transform: Look At** (World Position) ← Get Variable `PlayerFlat`. (Keeps
+   the shield facing you.)
+2. → **If**: Get Time **Greater** `BlockUntil` → True (time to lower it):
+   1. **Animator: Set Bool** (`Anim`) `Blocking`, value unticked (false).
+   2. → **Set Variable** `LastAttackTime` = Get Time. (So it waits a full
+      `AttackEvery` before swinging: your window to strike.)
+   3. → **Set Variable** `State` = `Attack`. (If you've stepped back, the
+      Attack state sends it chasing again.)
+
+![Block: face you; after BlockUntil, lower the shield, restart the attack timer, back to Attack](images/unity-graphs/6-4-block.png)
 
 **Return**
 1. **If**: **Vector 3: Distance** (A: **Transform: Get Position** of
@@ -641,7 +730,8 @@ Wire each from its output on **Switch On String**. Two reminders:
 
 ### 6.5 Part D: getting hit by the sword
 A hit counts only if all four checks pass: it's the sword, it was swung hard
-enough, the enemy is alive, and 2 s have passed since the last hit.
+enough, the enemy is alive, and 2 s have passed since the last hit. Then, if
+the shield is up, it's blocked: no damage, but it still uses up your swing.
 
 1. **On BS Trigger Enter** (Events → BS → Trigger). It fires when anything
    enters the Enemy's hitbox. Its **Collider** output is what touched it.
@@ -661,14 +751,21 @@ enough, the enemy is alive, and 2 s have passed since the last hit.
 
 ![Getting hit, part 2: not dead, and SwingCooldown has passed since LastHitTime](images/unity-graphs/6-5-b-alive-and-cooldown.png)
 
-6. True →
+6. True → **If**: Get Variable `State` **Equal** `Block`. True (blocked):
+   1. **Set Variable** `LastHitTime` = Get Time. (The blocked swing still
+      counts as your one swing in 2 s.)
+   2. → **Animator: Set Trigger** (`Anim`) `BlockHit`.
+
+![Getting hit, part 3: if State is Block, the hit is blocked: save LastHitTime and play Block Impact](images/unity-graphs/6-5-c-shield.png)
+
+7. False (not blocked) →
    1. **Set Variable** `LastHitTime` = Get Time.
    2. **Set Variable** `Health` = **Subtract** (Scalar): `Health` −
       `SwordDamage`.
    3. **Trigger Custom Event** `UpdateBar`.
    4. **Animator: Set Trigger** (`Anim`) `Hit`.
 
-![Getting hit, part 3: save LastHitTime, subtract SwordDamage, update the bar, play Hit](images/unity-graphs/6-5-c-take-damage.png)
+![Getting hit, part 4: save LastHitTime, subtract SwordDamage, update the bar, play Hit](images/unity-graphs/6-5-d-take-damage.png)
 
    5. → **If** `State` **Equal** `Wander` → True: **Set Variable** `State` =
       `Chase` (hitting it from behind makes it fight back).
@@ -676,53 +773,63 @@ enough, the enemy is alive, and 2 s have passed since the last hit.
       Event** `Die`. (Wire **both** the Set Variable's output and the first
       If's **False** into this If.)
 
-![Getting hit, part 4: if wandering, start chasing; if Health ≤ 0, trigger Die](images/unity-graphs/6-5-d-fight-back-or-die.png)
+![Getting hit, part 5: if wandering, start chasing; if Health ≤ 0, trigger Die](images/unity-graphs/6-5-e-fight-back-or-die.png)
 
 ### 6.6 Part E: dying and coming back
 1. **Custom Event** `Die`. Select it, and in the Graph Inspector tick
    **Coroutine** (this lets it wait).
 2. → **Set Variable** `State` = `Dead`.
 3. → **Nav Mesh Agent: Reset Path**.
-4. → **Animator: Reset Trigger** (`Anim`) `Hit` → **Animator: Reset Trigger**
-   (`Anim`) `Attack`. (The killing blow also asked for the Hit animation.
-   Clearing it stops Hit from interrupting the death animation.)
-5. → **Animator: Set Trigger** (`Anim`) `Die`.
+4. → **Animator: Set Bool** (`Anim`) `Blocking`, unticked (false). (If it
+   died with its shield up, this stops it coming back with the shield
+   raised.)
 
-![Dying, part 1: State Dead, stop, clear the Hit and Attack triggers, play Die](images/unity-graphs/6-6-a-die.png)
+![Dying, part 1: State Dead, stop moving, shield down](images/unity-graphs/6-6-a-die.png)
 
-6. → **Capsule Collider: Set Enabled** (target **This**) = false (can't be hit
+5. → **Animator: Reset Trigger** (`Anim`) `Hit` → **Reset Trigger** `Attack`
+   → **Reset Trigger** `BlockHit`. (The killing blow also asked for the Hit
+   animation. Clearing these stops a leftover one from interrupting the death
+   animation.)
+6. → **Animator: Set Trigger** (`Anim`) `Die`.
+
+![Dying, part 2: clear the Hit, Attack and BlockHit triggers, then play Die](images/unity-graphs/6-6-b-death-animation.png)
+
+7. → **Capsule Collider: Set Enabled** (target **This**) = false (can't be hit
    while dead).
-7. → **Game Object: Set Active** (target `HealthBar`) = false.
-8. → **Wait For Seconds** `2` (let the death animation play) → **Game
+8. → **Game Object: Set Active** (target `HealthBar`) = false.
+9. → **Wait For Seconds** `2` (let the death animation play) → **Game
    Object: Set Active** (`Model`) = false.
 
-![Dying, part 2: turn off the hitbox, hide the health bar, wait 2 s, hide the model](images/unity-graphs/6-6-b-vanish.png)
+![Dying, part 3: turn off the hitbox, hide the health bar, wait 2 s, hide the model](images/unity-graphs/6-6-c-vanish.png)
 
-9. → **Wait For Seconds** ← `RespawnSeconds`.
-10. → **Nav Mesh Agent: Warp** ← Get Variable `Home`.
-11. → **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
+10. → **Wait For Seconds** ← `RespawnSeconds`.
+11. → **Nav Mesh Agent: Warp** ← Get Variable `Home`.
+12. → **Set Variable** `Health` ← `MaxHealth` → **Trigger Custom Event**
     `UpdateBar`.
 
-![Dying, part 3: wait RespawnSeconds, warp home, refill Health and update the bar](images/unity-graphs/6-6-c-respawn.png)
+![Dying, part 4: wait RespawnSeconds, warp home, refill Health and update the bar](images/unity-graphs/6-6-d-respawn.png)
 
-12. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
+13. → **Game Object: Set Active** (`Model`) = true → (`HealthBar`) = true →
     **Capsule Collider: Set Enabled** = true.
-13. → **Animator: Play** (target `Anim`), the version with **State Name** and
+14. → **Animator: Play** (target `Anim`), the version with **State Name** and
     **Layer**: State Name `Base Layer.Idle`, Layer `-1`. This jumps straight
     back to Idle, out of the death pose. (Use your state's exact name if it
     isn't `Idle`.)
-14. → **Set Variable** `State` = `Wander`.
+15. → **Set Variable** `State` = `Wander`.
 
-![Dying, part 4: show the model and bar, turn the hitbox on, jump back to Idle, wander](images/unity-graphs/6-6-d-come-back.png)
+![Dying, part 5: show the model and bar, turn the hitbox on, jump back to Idle, wander](images/unity-graphs/6-6-e-come-back.png)
 
 ### 6.7 Part F: when you die, it goes home
 1. **On Global Event**, name `PlayerDied`, Arguments `0`.
-2. → **If**: `State` **Equal** `Chase` **Or** `State` **Equal** `Attack`
-   (use **Equal** twice and an **Or**).
-3. True → **Set Variable** `State` = `Return` → **Nav Mesh Agent: Set
-   Destination** ← `Home`.
+2. → **Switch On String**, Selector: Get Variable `State`. Add the options
+   `Chase`, `Attack` and `Block`.
+3. Wire **all three** of those outputs into the same next node (several flow
+   outputs can go into one input): **Animator: Set Bool** (`Anim`)
+   `Blocking`, unticked (false) → **Set Variable** `State` = `Return` →
+   **Nav Mesh Agent: Set Destination** ← Get Variable `Home`. (Wander,
+   Return and Dead go to Default, which isn't wired, so nothing happens.)
 
-![When you die: if State is Chase or Attack, set it to Return and head home](images/unity-graphs/6-7-player-died.png)
+![When you die: if State is Chase, Attack or Block, lower the shield, set Return and head home](images/unity-graphs/6-7-player-died.png)
 
 ---
 
@@ -736,8 +843,9 @@ look, click to grab).
 |---|---|
 | Enemy | Strolls around near its home, a new spot every 3–6 s, walk animation playing |
 | Walk within 6 m | It turns and runs at you |
-| Stand next to it | Attack animation every 1.6 s; your red HUD bar shrinks |
-| Stand there ~30 s | You're teleported to the spawn point with full health; the enemy goes home |
+| Stand next to it | Every 1.6 s it either swings (a random one of its swings; your red HUD bar shrinks) or raises its shield for 2 s |
+| Hit it while the shield is up | Block Impact plays; its health bar doesn't move |
+| Stand there ~45 s (longer when it blocks a lot) | You're teleported to the spawn point with full health; the enemy goes home |
 | Run away 15 m from its home | It gives up and walks home, healing to full |
 | Grab the sword and hit it | Works only with fast mouse moves. Real swings are a headset test |
 
@@ -762,6 +870,10 @@ Add **Debug: Log** nodes to print values to the Console.
 - [ ] Pick up the sword. Does it sit right in your hand? (If not, rotate the
       model under `Sword` in Unity.)
 - [ ] Touch the enemy gently: no damage. Swing properly: health bar drops.
+- [ ] Watch it attack: different swings, not the same one every time.
+- [ ] Hit the raised shield: Block Impact, no damage. Hit just after the
+      shield drops: damage. Does 35% / 2 s feel fair? (Change `BlockChance`,
+      `BlockDuration`.)
 - [ ] Swing twice quickly: only the first counts (2 s).
 - [ ] Does 1.5 m/s feel right as the minimum? (Change `MinSwingSpeed`.)
 - [ ] Kill it: death animation, gone, back about 17 s later (2 s + 15 s).
@@ -779,8 +891,12 @@ Add **Debug: Log** nodes to print values to the Console.
 |---|---|
 | Enemy doesn't move | NavMesh baked? (blue overlay on the ground.) Enemy placed on the blue area? Graph saved? A hole in the blue around the enemy: re-bake without **UserLayer9** (2.3) |
 | Can't pick up the sword, or it won't move | `Sword`'s Rigidbody **Is Kinematic** must be off (3.1). The `Grip` must still have its collider and **BS Grab Handle** |
-| Dead enemy jumps up again | Part E step 4: reset the `Hit` and `Attack` triggers before `Die`. In the Animator, the Death state must have no transitions out |
-| Comes back to life still lying down | Part E step 13: **Animator: Play** needs the exact state name, with the layer in front: `Base Layer.Idle` |
+| Always the same swing | `AttackIndex` is an **Int** parameter; each Any State → Swing arrow has both conditions (`Attack` and `AttackIndex` Equals 0/1/2); the Random: Range node is the whole-number version with Max `3` |
+| Shield never comes up | `BlockChance` above 0? **Animator: Set Bool** name exactly `Blocking`? Idle → Block and Walk → Block arrows have `Blocking` true and Has Exit Time off |
+| Shield stays up forever | Block state wired from **Switch On String**'s Block output? `BlockUntil` set when raising it (Attack, part 3)? Block → Idle arrow has `Blocking` false |
+| Block Impact cuts off at once | Block must be entered from Idle/Walk, not from Any State (4.4) |
+| Dead enemy jumps up again | Part E step 5: reset the `Hit`, `Attack` and `BlockHit` triggers before `Die`. In the Animator, the Death state must have no transitions out |
+| Comes back to life still lying down | Part E step 14: **Animator: Play** needs the exact state name, with the layer in front: `Base Layer.Idle` |
 | Enemy slides without animating | `Anim` variable points at the `Model`'s Animator? Parameter named exactly `Speed`? |
 | Enemy floats or sinks | Change the NavMeshAgent's **Base Offset**, or the `Model` child's Y position |
 | Sword hits never register | `Blade` and `Enemy` both on the layer **named** `UserLayer9` (slot 13, not slot 9)? `Blade` has **Is Trigger** on, Tag **UserTag1**, and is a child of `Sword` (which has the Rigidbody)? Enemy's Capsule Collider **Is Trigger** on? Try moving `Blade` to the **Default** layer |

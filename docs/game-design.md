@@ -155,6 +155,13 @@ Run only by the owner's page, 10 times a second:
 4. **Dead:** hidden for 15 s, then back at home. If the owner left, anyone
    respawns it 10 s late.
 
+**Sword-and-shield enemies (the knight):** when ready to attack, there's a
+35% chance it raises its shield for 2 s instead (`BlockChance`,
+`BlockDuration`). Hits on the raised shield do no damage but still use the
+player's swing; after the shield drops it waits a full attack interval, a
+window to strike. Otherwise it plays one of up to three swing animations at
+random. Built in the Unity guide (unity-first-scene.md, 6.4 and 6.5).
+
 Enemies only ever hurt their owner. Movement uses NavMesh (walks around
 obstacles), driven from Visual Scripting (9.5). The JavaScript test world
 still moves enemies in straight lines.
