@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brightwater Coast Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* A night sea chart: dark water, pale land, bronze for the accent, violet for spores and portals. */
+  --night: #0d1a24;
+  --panel: #142735;
+  --ink: #ebe3cc;
+  --muted: #a9b4b0;
+  --bronze: #d6974a;
+  --spore: #b88cff;
+  --line: #2a4152;
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --italic: "IM Fell English", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+  /* Layout: map first and largest; zone panel beside it on wide screens, story strip below. */
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--night);
+  color: var(--ink);
+  font: 17px/1.5 var(--body);
+}
+.wrap { max-width: 1360px; margin: 0 auto; padding: 20px 20px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 14px; }
+h1 { font: 400 clamp(30px, 4vw, 46px)/1.05 var(--display); margin: 0; letter-spacing: 0.02em; text-wrap: balance; }
+h1 small { display: block; font: italic 400 17px/1.3 var(--italic); color: var(--muted); letter-spacing: 0; margin-top: 6px; }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.switch { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+.switch button {
+  font: 700 14px/1 var(--body); color: var(--ink); background: transparent;
+  border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer;
+}
+.switch button[aria-pressed="true"] { background: var(--bronze); color: #1b1206; }
+.switch button:hover { background: rgba(214, 151, 74, 0.18); }
+.switch button[aria-pressed="true"]:hover { background: var(--bronze); }
+.switchlabel { color: var(--muted); font-size: 14px; }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 0 0 18px; }
+.mode { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.mode h3 { font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); margin: 0 0 8px; }
+.mode p { margin: 0; font-size: 15.5px; }
+.pick { display: inline-block; margin-left: 10px; font: 700 12px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: #1b1206; background: var(--spore); border-radius: 999px; padding: 4px 9px; vertical-align: middle; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+.mapbox { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 18px 40px rgba(0,0,0,.45); background: #163b52; }
+.mapbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#fog { pointer-events: none; }
+
+.marker {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(13, 26, 36, 0.82); color: var(--ink);
+  border: 1px solid rgba(235, 227, 204, 0.35); border-radius: 999px;
+  padding: 4px 11px 4px 4px; cursor: pointer; font: 500 14px/1.1 var(--body);
+  white-space: nowrap;
+}
+.marker .num {
+  width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--ink); color: var(--night); font: 700 13px/1 var(--body);
+}
+.marker .lv { color: var(--bronze); font-weight: 700; font-variant-numeric: tabular-nums; }
+.marker[aria-pressed="true"] { background: var(--bronze); color: #1b1206; border-color: var(--bronze); }
+.marker[aria-pressed="true"] .num { background: #1b1206; color: var(--bronze); }
+.marker[aria-pressed="true"] .lv { color: #1b1206; }
+.marker:hover { border-color: var(--ink); }
+@media (max-width: 700px) {
+  .marker { padding: 3px; }
+  .marker .label { display: none; }
+}
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px 20px; }
+.panel .kicker { font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.panel h2 { font: 400 28px/1.1 var(--display); margin: 8px 0 4px; text-wrap: balance; }
+.panel .tagline { font: italic 16px/1.4 var(--italic); color: var(--muted); margin: 0 0 14px; }
+.panel h3 { font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.panel p { margin: 0; }
+.panel ul { margin: 0; padding-left: 18px; }
+.panel li { margin: 2px 0; }
+.quests { list-style: none; padding: 0 !important; }
+.quests li { display: flex; gap: 10px; }
+.quests code { font: 700 13px/1.5 var(--body); color: var(--bronze); min-width: 30px; font-variant-numeric: tabular-nums; }
+.beat { border-left: 3px solid var(--bronze); padding-left: 12px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 12px 2px 0; color: var(--muted); font-size: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 28px; height: 0; border-top: 3px dashed #9c7a4c; display: inline-block; }
+.sw.ferry { border-top-color: var(--bronze); }
+.sw.portal { width: 12px; height: 12px; border: 2px solid var(--spore); border-radius: 50%; }
+.sw.thorn { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #1a0f22; box-shadow: 0 0 0 2px #7a4bb8, 0 0 8px #a46cff; }
+.sw.roots { border-top: 2px solid #6d4a92; }
+
+.story { margin-top: 34px; }
+.story h2 { font: 400 28px/1.1 var(--display); margin: 0 0 4px; }
+.story > p { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+.beats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.beats li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.beats .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.beats .n { font: 400 26px/1 var(--display); color: var(--bronze); }
+.beats b { font: 400 19px/1.15 var(--display); }
+.beats .lvl { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.beats p { margin: 0; font-size: 15.5px; }
+.story > p.note { margin-top: 30px; color: var(--muted); font-size: 15px; max-width: 80ch; }
+.note b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Brightwater Coast
+      <small>Swords and Spells Nexus · levels 1 to 10 · story: The Black Thorn Blight</small>
+    </h1>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="mapbox" id="mapbox" role="img" aria-label="Map of the wooded Brightwater Coast, overgrown in places by black thorn: the Squire's Yard tutorial in the south, Meadowmere Glade north of it, Brightwater city on the north coast, Glowcap Hollow mushroom forest to the east, Hollowmoor Ruins to the west, and Tideglass Isle across the water to the north, reached by ferry, where the giant black bramble called the Thornheart grows, its roots running under the water to the coast.">
+        <canvas id="land"></canvas>
+        <canvas id="fog"></canvas>
+      </div>
+      <div class="legend" aria-hidden="false">
+        <span><i class="sw"></i>Road</span>
+        <span><i class="sw ferry"></i>Ferry (sails at level 8)</span>
+        <span><i class="sw portal"></i>Portal, if each zone is its own world</span>
+        <span><i class="sw thorn"></i>Black thorn and blight berries</span>
+        <span><i class="sw roots"></i>Thorn roots under the water</span>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <section class="story">
+    <h2>The Black Thorn Blight</h2>
+    <p>A year ago the cargo ship <i>Gull's Mercy</i> wrecked on Tideglass Isle carrying barrels of rootsalt, an alchemist's growth tonic. It soaked into the old blackberry bramble at the island's heart, and the bramble woke up hungry. Now black thorn is pushing up through the woods all along the coast: briars that grow overnight, berries gone glossy black with a violet glow, and animals that eat them turning savage. Brightwater can't clear it alone, so the town posts contracts, and sellswords come to take them. That's you, and everyone else in the woods.</p>
+    <div class="modes">
+      <div class="mode"><h3>The berries</h3><p>Healthy hedgerows still grow <b>ripe blackberries</b>: pick one and eat it (raise it to your mouth) to heal a little. <b>Blight berries</b> are glossy black with a violet glow. Never eat them: collect them for contracts, and the town herbalist burns them. Wolves and goblins eat them, and that's what turns them.</p></div>
+      <div class="mode"><h3>Limited contracts</h3><p>There's no order or group to join. The contract board in Brightwater's square posts a few contracts per zone, each open for a limited time: they rotate every 30 minutes on the shared clock. Take up to three at once and do them on your own. Many players can hold the same contract, so you'll often meet others clearing the same briar patch.</p></div>
+      <div class="mode"><h3>Everyone in the same woods</h3><p>Every finished contract pushes a zone's thorn level down. When a zone's thorn gets too high, a <b>Thorn Surge</b> contract appears: a thorn brute and a wave of creatures, open to anyone in the zone, and everyone who hits it gets paid. Once an hour, a contract to burn back the <b>Thornheart</b> opens on the island. No party needed: just turn up.</p></div>
+    </div>
+    <ol class="beats" id="beats"></ol>
+    <p class="note"><b>Why it fits an MMO:</b> nobody is the one hero, the thorn grows back (which explains respawning enemies and the hourly Thornheart), and contracts give solo players a reason to be in the same place at the same time. <b>One world or several?</b> Each zone could be its own small Altspace world, joined to the city by a portal (violet rings), with progress carried by the backend.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const W = 1600, H = 1000;
+
+  // ---------- Geography (all in a 1600 × 1000 map space) ----------
+  const coast = (x) => 300 + 45 * Math.sin(x / 170 + 0.5) + 28 * Math.sin(x / 63 + 2)
+    + 12 * Math.sin(x / 29) + 85 * Math.exp(-(((x - 840) / 70) ** 2));
+  const ISLE = { x: 1135, y: 120 };
+  const isleR = (a) => 105 + 22 * Math.sin(3 * a + 0.6) + 12 * Math.sin(5 * a + 2) + 6 * Math.sin(9 * a);
+
+  const zones = [
+    { id: "yard", n: 0, name: "Squire's Yard", lv: "1", x: 800, y: 885, kind: "Tutorial",
+      tagline: "A training clearing in the woods outside the city.",
+      here: ["Training dummies that only count a real swing (1.5 m/s)", "A sparring knight that teaches you to wait for its shield to drop", "The first quest giver"],
+      enemies: ["Training dummies", "Sparring Knight (low damage, blocks often)", "One thorn slime (your first fight)"], quests: "q01",
+      berries: "A few ripe blackberries on the fence: practise eating one to heal.",
+      contracts: ["Burn the black bramble in the yard (the tutorial contract)"] },
+    { id: "city", n: 1, name: "Brightwater", lv: "hub", x: 0, y: 0, kind: "Main city",
+      tagline: "A timber harbour town, walled against the woods.",
+      here: ["The contract board in the square, posted by Elder Mara for the town", "The herbalist, who pays for blight berries", "Respawn point and story quest givers", "Market (gold, later)", "Ferry dock: the ferry sails at level 8"],
+      enemies: ["None: a safe zone"], quests: "",
+      berries: "The herbalist buys blight berries and burns them. Ripe ones at the market (later).",
+      contracts: ["New contracts every 30 minutes, a few per zone", "Take up to three at once"] },
+    { id: "fields", n: 2, name: "Meadowmere Glade", lv: "1–3", x: 760, y: 655, kind: "Combat zone",
+      tagline: "Small farms in a forest clearing, a windmill, the hunter's camp.",
+      here: ["Farm plots ringed by oak woods", "The hunter's camp on the eastern trail"],
+      enemies: ["Thorn slimes (lv 1)", "Rotfang wolves (lv 3): wolves that ate blight berries"], quests: "q02–q04",
+      berries: "Ripe berries in the farm hedgerows; blight berries on the briar patches.",
+      contracts: ["Burn 4 briar patches", "Cull 5 rotfang wolves", "Bring 6 blight berries to the herbalist"] },
+    { id: "glowcap", n: 3, name: "Glowcap Hollow", lv: "3–5", x: 1255, y: 575, kind: "Combat zone · mushroom forest",
+      tagline: "Giant glowing caps under a dark canopy, spore mist, violet light.",
+      here: ["Huge bioluminescent mushrooms among old trees", "Spore clouds that blur your view for a moment", "A scout's lookout"],
+      enemies: ["Sporelings, half-rotted where the thorn wraps them", "Goblin sappers harvesting blight berries"], quests: "q05–q06",
+      berries: "Blight berries tangled in the thorn vines that strangle the glowcaps.",
+      contracts: ["Cut the thorn off 3 great glowcaps", "Stop 5 goblin sappers", "Recover a jar of goblin 'growth jam'"] },
+    { id: "ruins", n: 4, name: "Hollowmoor Ruins", lv: "5–7", x: 335, y: 545, kind: "Combat zone",
+      tagline: "A collapsed keep and graveyard swallowed by pine forest.",
+      here: ["The broken keep and its graveyard", "Knight-Captain Varn in the keep (mini-boss)"],
+      enemies: ["Skeletons (lv 7)", "Hollow Knights: sword-and-shield undead that block", "Knight-Captain Varn (mini-boss)"], quests: "q07–q09",
+      berries: "Blight berries sprouting from the graves. Definitely don't eat these.",
+      contracts: ["Put 6 skeletons back to rest", "Defeat 3 Hollow Knights", "Burn the thorn out of the chapel"] },
+    { id: "isle", n: 5, name: "Tideglass Isle", lv: "8–10", x: ISLE.x, y: ISLE.y + 10, kind: "Combat zone · island",
+      tagline: "A pine island: the wreck of the Gull's Mercy, a goblin fort, and the Thornheart.",
+      here: ["A ferry ride from the city docks", "The wreck of the Gull's Mercy and its split rootsalt barrels", "Grubnak's goblin fort on the cliff", "The Thornheart: a black bramble the size of a hill"],
+      enemies: ["Tide crabs with thorn-barnacles", "Goblin raiders", "Grubnak the Sapper (boss, lv 9)", "The Thornheart (hourly, open to everyone)"], quests: "q10",
+      berries: "Blight berries everywhere. The Thornheart's are the size of your fist.",
+      contracts: ["Burn back the Thornheart (opens once an hour)", "Sink Grubnak's berry barrels", "Clear the tide crabs off the wreck"] }
+  ];
+
+  // The Black Thorn Blight: what happens in each zone.
+  const BEATS = {
+    yard: "Captain Bren trains new sellswords in a clearing south of town. Mid-drill, a slime crawls out of a black bramble with berries stuck in it. Your first contract: burn that bramble.",
+    city: "Elder Mara posts the town's contracts on the board in the square. Fresh ones every half hour, and the herbalist pays for every blight berry you bring back.",
+    fields: "Black thorn is choking the farm hedgerows. Wolves that eat blight berries turn into rotfang wolves. Save the ripe berries the farmers still have.",
+    glowcap: "Thorn vines strangle the glowcaps, and Sporelings rot where they're wrapped. Goblin sappers harvest blight berries to sell as 'growth jam'.",
+    ruins: "Thorn roots crack the old graves and the Hollow Knights rise. Their captain, Varn, guarded the island's bramble when he was alive. He knows where the thorn comes from.",
+    isle: "At the island's heart grows the Thornheart, fed by the Gull's Mercy's spilled rootsalt, and Grubnak's goblins farm its berries. Burn it back and the thorn retreats along the whole coast for a while, until it grows back."
+  };
+
+  const CITY = { x: 745, y: coast(745) + 52 };
+  zones[1].x = CITY.x; zones[1].y = CITY.y;
+  const DOCK = { x: 842, y: coast(842) - 18 };
+  const byId = Object.fromEntries(zones.map((z) => [z.id, z]));
+
+  // ---------- Helpers ----------
+  function rng(seed) {
+    return () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const onLand = (x, y) => y > coast(x) + 6;
+  const near = (x, y, z, r) => Math.hypot(x - z.x, y - z.y) < r;
+
+  function islePath(ctx, grow = 0) {
+    ctx.beginPath();
+    for (let i = 0; i <= 120; i++) {
+      const a = (i / 120) * Math.PI * 2, r = isleR(a) + grow;
+      const x = ISLE.x + Math.cos(a) * r, y = ISLE.y + Math.sin(a) * r * 0.82;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  }
+  function coastPath(ctx, off = 0) {
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 4) {
+      const y = coast(x) - off;
+      x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+  }
+  function curve(ctx, pts) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    const l = pts[pts.length - 1];
+    ctx.lineTo(l[0], l[1]);
+  }
+
+  // ---------- Drawing the land ----------
+  function drawLand(ctx) {
+    const r = rng(7);
+    // Sea
+    const sea = ctx.createLinearGradient(0, 0, 0, 420);
+    sea.addColorStop(0, "#0f2d42"); sea.addColorStop(1, "#1d4a62");
+    ctx.fillStyle = sea; ctx.fillRect(0, 0, W, H);
+    // Sea ripples along both shores
+    ctx.lineWidth = 1.4;
+    for (let k = 1; k <= 4; k++) {
+      ctx.strokeStyle = `rgba(190, 220, 230, ${0.22 - k * 0.04})`;
+      coastPath(ctx, k * 9); ctx.stroke();
+      islePath(ctx, k * 9); ctx.stroke();
+    }
+    // Mainland
+    coastPath(ctx); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    const land = ctx.createLinearGradient(0, 250, 0, H);
+    land.addColorStop(0, "#b9c08d"); land.addColorStop(1, "#9eaa74");
+    ctx.fillStyle = land; ctx.fill();
+    ctx.strokeStyle = "#3a3122"; ctx.lineWidth = 2.4; coastPath(ctx); ctx.stroke();
+    // Island
+    islePath(ctx); ctx.fillStyle = "#b3b886"; ctx.fill();
+    ctx.strokeStyle = "#3a3122"; ctx.lineWidth = 2.4; ctx.stroke();
+
+    // Stipple texture on land
+    for (let i = 0; i < 2600; i++) {
+      const x = r() * W, y = r() * H;
+      if (!onLand(x, y)) continue;
+      ctx.fillStyle = `rgba(70, 60, 35, ${0.05 + r() * 0.08})`;
+      ctx.fillRect(x, y, 1.6, 1.6);
+    }
+
+    // Zone grounds
+    blob(ctx, byId.glowcap, 210, 160, "rgba(74, 52, 112, 0.55)");
+    blob(ctx, byId.ruins, 190, 150, "rgba(84, 88, 92, 0.38)");
+    blob(ctx, byId.fields, 170, 110, "rgba(214, 205, 150, 0.55)");
+    blob(ctx, byId.yard, 130, 90, "rgba(214, 205, 150, 0.6)");
+    blob(ctx, CITY, 150, 110, "rgba(214, 205, 150, 0.5)");
+
+    drawRoads(ctx);
+    drawHills(ctx, r);
+    drawTrees(ctx, r);
+    drawFields(ctx, r);
+    drawYard(ctx);
+    drawRuins(ctx, r);
+    drawGlowcap(ctx, r);
+    drawCity(ctx, r);
+    drawIsle(ctx, r);
+    drawBlight(ctx, rng(91));
+    drawFerry(ctx);
+    drawPortals(ctx);
+    drawCompass(ctx);
+    // Sea names
+    ctx.fillStyle = "rgba(220, 232, 236, 0.55)";
+    ctx.font = "italic 30px 'IM Fell English', Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText("The Fogwater Sound", 560, 120);
+    ctx.font = "italic 20px 'IM Fell English', Georgia, serif";
+    ctx.fillText("Wreckers' Reach", 1430, 300);
+  }
+
+  function blob(ctx, z, rx, ry, color) {
+    const g = ctx.createRadialGradient(z.x, z.y, 10, z.x, z.y, rx);
+    g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save(); ctx.translate(z.x, z.y); ctx.scale(1, ry / rx); ctx.translate(-z.x, -z.y);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.x, z.y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
+
+  function drawRoads(ctx) {
+    ctx.save();
+    ctx.strokeStyle = "#8e6f45"; ctx.lineWidth = 4; ctx.setLineDash([12, 9]); ctx.lineCap = "round";
+    const Y = byId.yard, F = byId.fields, G = byId.glowcap, R = byId.ruins;
+    curve(ctx, [[Y.x, Y.y - 40], [790, 790], [F.x + 10, F.y + 30], [775, 560], [CITY.x + 15, CITY.y + 60]]); ctx.stroke();
+    curve(ctx, [[CITY.x + 70, CITY.y + 30], [960, 480], [1080, 520], [G.x - 150, G.y]]); ctx.stroke();
+    curve(ctx, [[CITY.x - 70, CITY.y + 30], [560, 470], [470, 520], [R.x + 140, R.y]]); ctx.stroke();
+    // Hunter's camp spur
+    curve(ctx, [[F.x + 60, F.y - 10], [920, 640], [990, 620]]); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFerry(ctx) {
+    ctx.save();
+    ctx.strokeStyle = "#d6974a"; ctx.lineWidth = 3.5; ctx.setLineDash([4, 10]); ctx.lineCap = "round";
+    curve(ctx, [[DOCK.x + 10, DOCK.y - 6], [930, 250], [1010, 210], [ISLE.x - 95, ISLE.y + 50]]); ctx.stroke();
+    ctx.setLineDash([]);
+    // little boat
+    const bx = 950, by = 238;
+    ctx.fillStyle = "#3a2a18";
+    ctx.beginPath(); ctx.moveTo(bx - 18, by); ctx.lineTo(bx + 18, by); ctx.lineTo(bx + 11, by + 8); ctx.lineTo(bx - 11, by + 8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#3a2a18"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 22); ctx.stroke();
+    ctx.fillStyle = "#ebe3cc"; ctx.beginPath(); ctx.moveTo(bx + 1, by - 21); ctx.lineTo(bx + 14, by - 5); ctx.lineTo(bx + 1, by - 5); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHills(ctx, r) {
+    ctx.save(); ctx.strokeStyle = "rgba(60, 50, 30, 0.55)"; ctx.lineWidth = 2;
+    for (let i = 0; i < 26; i++) {
+      const x = 60 + r() * 420, y = coast(x) + 40 + r() * 110;
+      if (near(x, y, byId.ruins, 170)) continue;
+      const s = 14 + r() * 14;
+      ctx.beginPath(); ctx.moveTo(x - s, y); ctx.quadraticCurveTo(x, y - s * 1.3, x + s, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - s * 0.2, y - s * 0.55); ctx.lineTo(x + s * 0.5, y - 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function tree(ctx, x, y, s, dark) {
+    ctx.fillStyle = "rgba(60, 45, 25, 0.8)"; ctx.fillRect(x - 1, y, 2, s * 0.6);
+    ctx.fillStyle = dark ? "#41603a" : "#5e7f44";
+    ctx.beginPath(); ctx.arc(x, y - s * 0.2, s * 0.75, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(30, 42, 22, 0.55)"; ctx.lineWidth = 1; ctx.stroke();
+  }
+  function pine(ctx, x, y, s) {
+    ctx.fillStyle = "rgba(55, 40, 22, 0.85)"; ctx.fillRect(x - 1, y, 2, s * 0.45);
+    ctx.fillStyle = "#2f4f35";
+    for (let k = 0; k < 3; k++) {
+      const w = s * (0.75 - k * 0.18), top = y - s * (0.55 + k * 0.42);
+      ctx.beginPath(); ctx.moveTo(x - w, y - k * s * 0.42); ctx.lineTo(x, top); ctx.lineTo(x + w, y - k * s * 0.42); ctx.closePath(); ctx.fill();
+    }
+  }
+  // Roads as point lists, so the woods can leave them clear.
+  const ROADS = () => {
+    const Y = byId.yard, F = byId.fields, G = byId.glowcap, R = byId.ruins;
+    return [
+      [[Y.x, Y.y - 40], [790, 790], [F.x + 10, F.y + 30], [775, 560], [CITY.x + 15, CITY.y + 60]],
+      [[CITY.x + 70, CITY.y + 30], [960, 480], [1080, 520], [G.x - 150, G.y]],
+      [[CITY.x - 70, CITY.y + 30], [560, 470], [470, 520], [R.x + 140, R.y]],
+      [[F.x + 60, F.y - 10], [920, 640], [990, 620]]
+    ];
+  };
+  function nearRoad(x, y, d) {
+    for (const road of ROADS()) for (let i = 0; i < road.length - 1; i++) {
+      const [ax, ay] = road[i], [bx, by] = road[i + 1];
+      const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2)));
+      if (Math.hypot(x - (ax + t * (bx - ax)), y - (ay + t * (by - ay))) < d) return true;
+    }
+    return false;
+  }
+  function drawTrees(ctx, r) {
+    const clear = [[byId.glowcap, 175], [byId.ruins, 150], [byId.fields, 150], [byId.yard, 105], [CITY, 120]];
+    // Canopy shade first, so the woods read as woods even between trees.
+    for (let i = 0; i < 260; i++) {
+      const x = r() * W, y = 320 + r() * 690;
+      if (!onLand(x, y) || clear.some(([z, rad]) => near(x, y, z, rad + 20))) continue;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 90);
+      g.addColorStop(0, "rgba(46, 74, 42, 0.30)"); g.addColorStop(1, "rgba(46, 74, 42, 0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 90, 0, Math.PI * 2); ctx.fill();
+    }
+    const pts = [];
+    for (let i = 0; i < 4200; i++) {
+      const x = r() * W, y = 330 + r() * 680;
+      if (!onLand(x, y + 14)) continue;
+      if (clear.some(([z, rad]) => near(x, y, z, rad))) continue;
+      if (nearRoad(x, y, 16)) continue;
+      pts.push([x, y, r()]);
+    }
+    pts.sort((p, q) => p[1] - q[1]);
+    for (const [x, y, k] of pts) {
+      // Pines in the west (around the ruins) and the north, oaks elsewhere.
+      const pineZone = x < 560 || y < coast(x) + 70;
+      if (pineZone ? k < 0.75 : k < 0.2) pine(ctx, x, y, 10 + k * 7);
+      else tree(ctx, x, y, 7 + k * 6, k > 0.55);
+    }
+    // Dark trees around and inside the mushroom hollow.
+    const G = byId.glowcap;
+    for (let i = 0; i < 70; i++) {
+      const a = r() * Math.PI * 2, d = 120 + r() * 70;
+      const x = G.x + Math.cos(a) * d, y = G.y + Math.sin(a) * d * 0.72;
+      if (onLand(x, y + 14) && !nearRoad(x, y, 16)) tree(ctx, x, y, 9 + r() * 5, true);
+    }
+  }
+
+  function drawFields(ctx, r) {
+    const F = byId.fields;
+    const cols = ["#b9c27a", "#d8c46e", "#9fb06a", "#cdb460", "#a9b97a"];
+    ctx.save(); ctx.translate(F.x - 20, F.y + 5); ctx.rotate(-0.12);
+    for (let i = -3; i <= 3; i++) for (let j = -2; j <= 2; j++) {
+      if (Math.abs(i) + Math.abs(j) > 2 || Math.abs(i) > 2) continue;
+      ctx.fillStyle = cols[(i * 3 + j * 7 + 20) % cols.length];
+      ctx.fillRect(i * 44 - 20, j * 32 - 14, 40, 28);
+      ctx.strokeStyle = "rgba(90, 80, 40, 0.5)"; ctx.lineWidth = 1;
+      for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(i * 44 - 18, j * 32 - 10 + k * 5.5); ctx.lineTo(i * 44 + 18, j * 32 - 10 + k * 5.5); ctx.stroke(); }
+    }
+    ctx.restore();
+    // windmill
+    const wx = F.x - 120, wy = F.y - 40;
+    ctx.fillStyle = "#6d5636"; ctx.fillRect(wx - 6, wy - 4, 12, 22);
+    ctx.strokeStyle = "#3a2a18"; ctx.lineWidth = 3;
+    for (let k = 0; k < 4; k++) { const a = 0.4 + k * Math.PI / 2; ctx.beginPath(); ctx.moveTo(wx, wy - 4); ctx.lineTo(wx + Math.cos(a) * 22, wy - 4 + Math.sin(a) * 22); ctx.stroke(); }
+    // hunter's camp tent
+    const tx = 1000, ty = 615;
+    ctx.fillStyle = "#8a5a32"; ctx.beginPath(); ctx.moveTo(tx - 16, ty + 10); ctx.lineTo(tx, ty - 14); ctx.lineTo(tx + 16, ty + 10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#e0a050"; ctx.beginPath(); ctx.arc(tx + 26, ty + 8, 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawYard(ctx) {
+    const Y = byId.yard;
+    ctx.save();
+    ctx.fillStyle = "rgba(180, 160, 110, 0.6)"; ctx.fillRect(Y.x - 85, Y.y - 50, 170, 100);
+    ctx.strokeStyle = "#5a4326"; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); ctx.strokeRect(Y.x - 85, Y.y - 50, 170, 100);
+    ctx.setLineDash([]); ctx.lineWidth = 3;
+    for (let i = 0; i < 4; i++) {
+      const x = Y.x - 55 + i * 36, y = Y.y + 8;
+      ctx.beginPath(); ctx.moveTo(x, y + 14); ctx.lineTo(x, y - 14); ctx.moveTo(x - 9, y - 6); ctx.lineTo(x + 9, y - 6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y - 18, 4, 0, Math.PI * 2); ctx.stroke();
+    }
+    // banner
+    ctx.fillStyle = "#a33a2a"; ctx.fillRect(Y.x + 70, Y.y - 46, 3, 30);
+    ctx.beginPath(); ctx.moveTo(Y.x + 73, Y.y - 46); ctx.lineTo(Y.x + 92, Y.y - 40); ctx.lineTo(Y.x + 73, Y.y - 33); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawRuins(ctx, r) {
+    const R = byId.ruins;
+    ctx.save(); ctx.strokeStyle = "#4b4a46"; ctx.lineWidth = 4;
+    // broken keep outline
+    const segs = [[-70, -50, -10, -50], [10, -50, 70, -50], [70, -50, 70, 10], [70, 30, 70, 50], [-70, -50, -70, -10], [-70, 20, -70, 50], [-70, 50, -20, 50], [20, 50, 70, 50]];
+    for (const [a, b, c, d] of segs) { ctx.beginPath(); ctx.moveTo(R.x + a, R.y + b); ctx.lineTo(R.x + c, R.y + d); ctx.stroke(); }
+    ctx.fillStyle = "#5b5a55"; ctx.fillRect(R.x - 14, R.y - 22, 28, 30);
+    ctx.fillStyle = "#3a3936"; ctx.beginPath(); ctx.moveTo(R.x - 14, R.y - 22); ctx.lineTo(R.x - 6, R.y - 34); ctx.lineTo(R.x + 2, R.y - 26); ctx.lineTo(R.x + 14, R.y - 36); ctx.lineTo(R.x + 14, R.y - 22); ctx.fill();
+    // graveyard
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+      const x = R.x - 150 + i * 22 + (j % 2) * 8, y = R.y + 40 + j * 26;
+      ctx.fillStyle = "#6c6b66"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, 10, 15, [5, 5, 1, 1]) : ctx.rect(x, y, 10, 15); ctx.fill();
+    }
+    // rubble
+    for (let i = 0; i < 40; i++) {
+      const a = r() * Math.PI * 2, d = 40 + r() * 110;
+      ctx.fillStyle = `rgba(80, 78, 72, ${0.4 + r() * 0.4})`;
+      ctx.fillRect(R.x + Math.cos(a) * d, R.y + Math.sin(a) * d * 0.7, 3 + r() * 5, 3 + r() * 4);
+    }
+    // dead trees
+    ctx.strokeStyle = "#3d3326"; ctx.lineWidth = 2;
+    for (const [dx, dy] of [[120, -40], [140, 30], [-120, -60], [100, 80]]) {
+      const x = R.x + dx, y = R.y + dy;
+      ctx.beginPath(); ctx.moveTo(x, y + 14); ctx.lineTo(x, y - 10); ctx.moveTo(x, y - 2); ctx.lineTo(x + 8, y - 10); ctx.moveTo(x, y + 2); ctx.lineTo(x - 7, y - 6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function mushroom(ctx, x, y, s, hue) {
+    ctx.fillStyle = "#e8dcc4"; ctx.fillRect(x - s * 0.18, y - s * 0.2, s * 0.36, s * 0.75);
+    ctx.save();
+    ctx.shadowColor = hue; ctx.shadowBlur = s * 1.1;
+    ctx.fillStyle = hue;
+    ctx.beginPath(); ctx.ellipse(x, y - s * 0.2, s * 0.75, s * 0.45, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.beginPath(); ctx.arc(x - s * 0.25, y - s * 0.42, s * 0.08, 0, Math.PI * 2); ctx.arc(x + s * 0.2, y - s * 0.5, s * 0.06, 0, Math.PI * 2); ctx.fill();
+  }
+  function drawGlowcap(ctx, r) {
+    const G = byId.glowcap;
+    const hues = ["#b88cff", "#ff79b4", "#7fd6ff", "#c9a4ff"];
+    const pts = [];
+    for (let i = 0; i < 70; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 190;
+      const x = G.x + Math.cos(a) * d, y = G.y + Math.sin(a) * d * 0.72;
+      pts.push([x, y, d]);
+    }
+    pts.sort((p, q) => p[1] - q[1]);
+    for (const [x, y, d] of pts) mushroom(ctx, x, y, 8 + (1 - d / 190) * 16 + r() * 5, hues[Math.floor(r() * hues.length)]);
+    // spore specks
+    for (let i = 0; i < 90; i++) {
+      const a = r() * Math.PI * 2, d = r() * 220;
+      ctx.fillStyle = `rgba(200, 170, 255, ${0.25 + r() * 0.45})`;
+      ctx.beginPath(); ctx.arc(G.x + Math.cos(a) * d, G.y + Math.sin(a) * d * 0.7 - 10, 1 + r() * 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function house(ctx, x, y, w, h, roof) {
+    ctx.fillStyle = "#e9dfc6"; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = roof; ctx.beginPath(); ctx.moveTo(x - 2, y); ctx.lineTo(x + w / 2, y - h * 0.7); ctx.lineTo(x + w + 2, y); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(50, 40, 25, 0.6)"; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+  }
+  function drawCity(ctx, r) {
+    const C = CITY;
+    // walls
+    ctx.save();
+    ctx.strokeStyle = "#5c4a32"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(C.x, C.y, 92, -0.35, Math.PI + 0.25); ctx.stroke();
+    for (let k = 0; k <= 6; k++) {
+      const a = -0.35 + k * ((Math.PI + 0.6) / 6);
+      ctx.fillStyle = "#5c4a32"; ctx.beginPath(); ctx.arc(C.x + Math.cos(a) * 92, C.y + Math.sin(a) * 92, 7, 0, Math.PI * 2); ctx.fill();
+    }
+    // houses
+    const roofs = ["#9b4a33", "#7a5a3a", "#5d6f7d", "#a8643a"];
+    const spots = [];
+    for (let i = 0; i < 46; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 78;
+      const x = C.x + Math.cos(a) * d, y = C.y + Math.sin(a) * d * 0.8;
+      if (!onLand(x, y - 8)) continue;
+      spots.push([x, y]);
+    }
+    spots.sort((p, q) => p[1] - q[1]);
+    for (const [x, y] of spots) house(ctx, x - 7, y - 5, 13 + r() * 6, 10, roofs[Math.floor(r() * roofs.length)]);
+    // docks into the bay
+    ctx.fillStyle = "#6b5034";
+    ctx.fillRect(DOCK.x - 40, DOCK.y + 8, 70, 6);
+    ctx.fillRect(DOCK.x - 6, DOCK.y - 14, 6, 30);
+    ctx.fillRect(DOCK.x + 20, DOCK.y - 8, 6, 22);
+    // harbour tower
+    const bx = DOCK.x - 52, by = DOCK.y + 4;
+    ctx.fillStyle = "#e9dfc6"; ctx.fillRect(bx - 9, by - 46, 18, 46);
+    ctx.strokeStyle = "#3a2a18"; ctx.lineWidth = 1.5; ctx.strokeRect(bx - 9, by - 46, 18, 46);
+    ctx.fillStyle = "#3a2a18"; ctx.beginPath(); ctx.moveTo(bx - 11, by - 46); ctx.lineTo(bx, by - 62); ctx.lineTo(bx + 11, by - 46); ctx.fill();
+    ctx.fillStyle = "#1d1810"; ctx.beginPath(); ctx.arc(bx, by - 34, 5, Math.PI, 0); ctx.rect(bx - 5, by - 34, 10, 8); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawIsle(ctx, r) {
+    // rocks
+    for (let i = 0; i < 26; i++) {
+      const a = r() * Math.PI * 2, d = 20 + r() * 70;
+      const x = ISLE.x + Math.cos(a) * d, y = ISLE.y + Math.sin(a) * d * 0.7;
+      ctx.fillStyle = `rgba(95, 92, 84, ${0.5 + r() * 0.4})`;
+      ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.lineTo(x + 7, y + 3); ctx.lineTo(x - 6, y + 4); ctx.closePath(); ctx.fill();
+    }
+    // goblin fort palisade on the cliff (north)
+    ctx.fillStyle = "#5a3e22";
+    for (let i = 0; i < 11; i++) {
+      const x = ISLE.x - 40 + i * 8, y = ISLE.y - 50;
+      ctx.beginPath(); ctx.moveTo(x, y + 14); ctx.lineTo(x + 3, y); ctx.lineTo(x + 6, y + 14); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = "#7b2f22"; ctx.fillRect(ISLE.x + 52, ISLE.y - 70, 3, 24);
+    ctx.beginPath(); ctx.moveTo(ISLE.x + 55, ISLE.y - 70); ctx.lineTo(ISLE.x + 70, ISLE.y - 64); ctx.lineTo(ISLE.x + 55, ISLE.y - 58); ctx.fill();
+    // pines across the island
+    for (let i = 0; i < 60; i++) {
+      const a = r() * Math.PI * 2, d = 15 + r() * 70;
+      const x = ISLE.x + Math.cos(a) * d, y = ISLE.y + Math.sin(a) * d * 0.7;
+      if (Math.abs(x - ISLE.x) < 50 && y < ISLE.y - 30) continue;
+      if (Math.hypot(x - (ISLE.x - 20), y - (ISLE.y + 12)) < 42) continue; // the Thornheart's clearing
+      pine(ctx, x, y + 8, 9 + r() * 5);
+    }
+    // shipwreck on the south-east shore
+    const sx = ISLE.x + 96, sy = ISLE.y + 58;
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(0.35);
+    ctx.fillStyle = "#4a3320"; ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.lineTo(18, 10); ctx.lineTo(-20, 10); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#4a3320"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(6, -26); ctx.stroke();
+    ctx.restore();
+    // sea glass
+    for (let i = 0; i < 30; i++) {
+      const a = r() * Math.PI * 2, rr = isleR(a) - 4 - r() * 10;
+      const x = ISLE.x + Math.cos(a) * rr, y = ISLE.y + Math.sin(a) * rr * 0.82;
+      ctx.fillStyle = r() < 0.5 ? "#7fe0d0" : "#9fd0ff";
+      ctx.beginPath(); ctx.moveTo(x, y - 3); ctx.lineTo(x + 2.5, y); ctx.lineTo(x, y + 3); ctx.lineTo(x - 2.5, y); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // Black thorn: dark looping briars with thorns, and berry clusters.
+  function bramble(ctx, x, y, s, r, blight) {
+    ctx.save();
+    ctx.strokeStyle = blight ? "#24132e" : "#3a2a20"; ctx.lineWidth = Math.max(1.4, s * 0.12); ctx.lineCap = "round";
+    for (let k = 0; k < 5; k++) {
+      const a = r() * Math.PI * 2, len = s * (0.8 + r() * 0.7);
+      const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len * 0.7;
+      const cx = x + Math.cos(a + 1.2) * len * 0.7, cy = y + Math.sin(a + 1.2) * len * 0.5;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(cx, cy, ex, ey); ctx.stroke();
+      // thorns along the cane
+      for (let t = 0.3; t < 1; t += 0.3) {
+        const px = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * cx + t * t * ex;
+        const py = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * cy + t * t * ey;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + s * 0.12, py - s * 0.16); ctx.stroke();
+      }
+    }
+    if (!blight) {
+      ctx.fillStyle = "#4f7a3c";
+      for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x + (r() - 0.5) * s * 1.6, y + (r() - 0.5) * s, s * 0.22, s * 0.13, r() * 3, 0, Math.PI * 2); ctx.fill(); }
+    }
+    // berries
+    const n = 3 + Math.floor(r() * 4);
+    for (let k = 0; k < n; k++) {
+      const bx = x + (r() - 0.5) * s * 1.6, by = y + (r() - 0.5) * s;
+      const br = Math.max(1.8, s * 0.13);
+      if (blight) { ctx.shadowColor = "#a46cff"; ctx.shadowBlur = br * 3; }
+      ctx.fillStyle = blight ? "#170b1f" : "#2a1734";
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = blight ? "rgba(190, 140, 255, 0.9)" : "rgba(255, 255, 255, 0.55)";
+      ctx.beginPath(); ctx.arc(bx - br * 0.35, by - br * 0.35, br * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawBlight(ctx, r) {
+    // Thorn roots running from the island under the water to the coast.
+    ctx.save();
+    ctx.strokeStyle = "rgba(150, 105, 205, 0.8)"; ctx.lineWidth = 3; ctx.setLineDash([3, 6]); ctx.lineCap = "round";
+    // Each root: where it comes ashore (x on the coast), and a control point for its curve.
+    const roots = [[520, 760, 180], [1080, 980, 205], [1300, 1210, 220]];
+    for (const [shoreX, cx, cy] of roots) {
+      ctx.beginPath(); ctx.moveTo(ISLE.x - 20, ISLE.y + 40);
+      ctx.quadraticCurveTo(cx, cy, shoreX, coast(shoreX) - 4);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Healthy hedgerows with ripe berries around the farm glade.
+    const F = byId.fields;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      bramble(ctx, F.x - 20 + Math.cos(a) * 140, F.y + 5 + Math.sin(a) * 82, 9, r, false);
+    }
+    // Blight patches: a few in the glade, more the further out you go.
+    const patches = [
+      [F, 6, 120, 8], [byId.glowcap, 12, 175, 10], [byId.ruins, 12, 160, 10], [byId.yard, 1, 0, 10]
+    ];
+    for (const [z, count, spread, size] of patches) {
+      for (let i = 0; i < count; i++) {
+        const a = r() * Math.PI * 2, d = count === 1 ? 0 : spread * (0.55 + r() * 0.5);
+        const x = (z === byId.yard ? z.x + 55 : z.x) + Math.cos(a) * d, y = (z === byId.yard ? z.y - 30 : z.y) + Math.sin(a) * d * 0.7;
+        if (onLand(x, y + 6)) bramble(ctx, x, y, size + r() * 5, r, true);
+      }
+    }
+    // Black thorn creeping up the coast where the roots come ashore.
+    for (const x of [520, 1080, 1300]) {
+      for (let i = 0; i < 4; i++) bramble(ctx, x + (r() - 0.5) * 60, coast(x) + 22 + r() * 30, 9 + r() * 4, r, true);
+    }
+    // The Thornheart: a black bramble the size of a hill, glowing faintly.
+    const tx = ISLE.x - 20, ty = ISLE.y + 12;
+    const g = ctx.createRadialGradient(tx, ty, 4, tx, ty, 60);
+    g.addColorStop(0, "rgba(164, 108, 255, 0.55)"); g.addColorStop(1, "rgba(164, 108, 255, 0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(tx, ty, 60, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 9; i++) bramble(ctx, tx + (r() - 0.5) * 34, ty + (r() - 0.5) * 22, 16 + r() * 8, r, true);
+  }
+
+  function drawPortals(ctx) {
+    // Where each zone would join the city, if zones are separate worlds.
+    const gates = [[byId.fields.x + 8, byId.fields.y - 95], [byId.glowcap.x - 175, byId.glowcap.y - 10], [byId.ruins.x + 165, byId.ruins.y - 15], [DOCK.x + 34, DOCK.y + 4]];
+    ctx.save();
+    for (const [x, y] of gates) {
+      ctx.shadowColor = "#b88cff"; ctx.shadowBlur = 12;
+      ctx.strokeStyle = "#b88cff"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(x, y, 8, 11, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCompass(ctx) {
+    const x = 1500, y = 880;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = "rgba(225, 218, 186, 0.92)"; ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(58, 49, 34, 0.7)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, 0, 44, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, 36, 0, Math.PI * 2); ctx.stroke();
+    for (let k = 0; k < 4; k++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = k % 2 ? "rgba(58,49,34,0.85)" : "rgba(214,151,74,0.9)";
+      ctx.beginPath(); ctx.moveTo(0, -52); ctx.lineTo(8, 0); ctx.lineTo(-8, 0); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    ctx.fillStyle = "#3a3122"; ctx.font = "22px 'IM Fell English SC', Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillText("N", x, y - 64);
+  }
+
+  // ---------- Fog ----------
+  const fogR = rng(42);
+  const fogBlobs = Array.from({ length: 34 }, (_, i) => {
+    // Most fog over the sea and the island, some reaching the docks and the ruins.
+    const pick = fogR();
+    let x, y;
+    if (pick < 0.45) { x = 850 + fogR() * 600; y = 40 + fogR() * 260; }
+    else if (pick < 0.7) { x = 650 + fogR() * 350; y = 250 + fogR() * 160; }
+    else if (pick < 0.9) { x = 200 + fogR() * 300; y = 430 + fogR() * 230; }
+    else { x = fogR() * W; y = fogR() * 300; }
+    return { x, y, r: 70 + fogR() * 120, vx: -0.08 - fogR() * 0.18, ph: fogR() * 6.28 };
+  });
+  let fogLevel = 0.6, fogTarget = 0.6;  // a light sea and forest mist
+
+  // ---------- Canvas sizing and render loop ----------
+  const box = document.getElementById("mapbox");
+  const landC = document.getElementById("land"), fogC = document.getElementById("fog");
+  const lctx = landC.getContext("2d"), fctx = fogC.getContext("2d");
+  let scale = 1;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = box.clientWidth, h = box.clientHeight;
+    for (const c of [landC, fogC]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    scale = (w * dpr) / W;
+    lctx.setTransform(scale, 0, 0, scale, 0, 0);
+    drawLand(lctx);
+    drawFog(0);
+  }
+  function drawFog(t) {
+    fctx.setTransform(1, 0, 0, 1, 0, 0);
+    fctx.clearRect(0, 0, fogC.width, fogC.height);
+    if (fogLevel < 0.01) return;
+    fctx.setTransform(scale, 0, 0, scale, 0, 0);
+    for (const b of fogBlobs) {
+      const x = ((b.x + b.vx * t / 16 + 400) % (W + 400) + (W + 400)) % (W + 400) - 200;
+      const y = b.y + Math.sin(t / 3000 + b.ph) * 8;
+      const g = fctx.createRadialGradient(x, y, 0, x, y, b.r);
+      g.addColorStop(0, `rgba(226, 232, 236, ${0.22 * fogLevel})`);
+      g.addColorStop(1, "rgba(226, 232, 236, 0)");
+      fctx.fillStyle = g; fctx.beginPath(); fctx.arc(x, y, b.r, 0, Math.PI * 2); fctx.fill();
+    }
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let start = performance.now();
+  function frame(now) {
+    const t = reduceMotion ? 0 : now - start;
+    fogLevel += (fogTarget - fogLevel) * (reduceMotion ? 1 : 0.035);
+    drawFog(t);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Markers, panel, story strip ----------
+  const panel = document.getElementById("panel");
+  const markers = {};
+  for (const z of zones) {
+    const b = document.createElement("button");
+    b.className = "marker"; b.type = "button"; b.id = "m-" + z.id;
+    b.style.left = (z.x / W * 100) + "%";
+    b.style.top = (z.y / H * 100) + "%";
+    b.innerHTML = `<span class="num">${z.n}</span><span class="label">${z.name} <span class="lv">${z.lv === "hub" ? "hub" : "lv " + z.lv}</span></span>`;
+    b.setAttribute("aria-label", `${z.name}, ${z.kind}, ${z.lv === "hub" ? "hub" : "levels " + z.lv}`);
+    b.addEventListener("click", () => select(z.id));
+    box.appendChild(b);
+    markers[z.id] = b;
+  }
+  // Nudge labels off the drawings they name: city label out over the water, isle label clear of the ferry.
+  markers.city.style.top = ((CITY.y - 128) / H * 100) + "%";
+  markers.city.style.left = ((CITY.x - 120) / W * 100) + "%";
+  markers.isle.style.top = ((ISLE.y + 112) / H * 100) + "%";
+  markers.isle.style.left = ((ISLE.x + 165) / W * 100) + "%";
+  markers.glowcap.style.top = ((byId.glowcap.y + 150) / H * 100) + "%";
+  markers.ruins.style.top = ((byId.ruins.y + 140) / H * 100) + "%";
+  markers.fields.style.top = ((byId.fields.y + 95) / H * 100) + "%";
+  markers.yard.style.top = ((byId.yard.y + 72) / H * 100) + "%";
+
+  function list(items) { return "<ul>" + items.map((i) => `<li>${i}</li>`).join("") + "</ul>"; }
+  function select(id) {
+    current = id;
+    const z = byId[id];
+    for (const [k, b] of Object.entries(markers)) b.setAttribute("aria-pressed", String(k === id));
+    panel.innerHTML = `
+      <div class="kicker">${z.n} · ${z.kind}</div>
+      <h2>${z.name}</h2>
+      <p class="tagline">${z.lv === "hub" ? "Hub" : "Levels " + z.lv}. ${z.tagline}</p>
+      <h3>The Black Thorn</h3><p class="beat">${BEATS[z.id]}</p>
+      <h3>What's here</h3>${list(z.here)}
+      <h3>Enemies</h3>${list(z.enemies)}
+      <h3>Berries</h3><p>${z.berries}</p>
+      <h3>${z.id === "city" ? "The contract board" : "Sample contracts"}</h3>${list(z.contracts)}
+      ${z.quests ? `<h3>Story quests</h3><ul class="quests"><li><code>${z.quests}</code>from the 10-quest chain, done solo</li></ul>` : ""}`;
+  }
+
+  let current = "yard";
+  document.getElementById("beats").innerHTML = zones.map((z) => `
+    <li><div class="head"><span class="n">${z.n}</span><b>${z.name}</b><span class="lvl">${z.lv === "hub" ? "hub" : "lv " + z.lv}</span></div>
+    <p>${BEATS[z.id]}</p></li>`).join("");
+
+  select("yard");
+  const boot = () => { resize(); requestAnimationFrame(frame); };
+  window.addEventListener("resize", () => { clearTimeout(window.__rz); window.__rz = setTimeout(resize, 120); });
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(boot, boot);
+})();
+</script>
+</body>
+</html>

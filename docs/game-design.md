@@ -9,6 +9,11 @@
 > - **[SPIKE]**: the docs suggest it works, but it needs a quick prototype to
 >   confirm before we build on it.
 
+> **Story and map:** the chosen story is **The Black Thorn Blight**, with a
+> tutorial, a main city and four combat zones: see [story.md](story.md) and
+> the visual map [map.html](map.html). It replaces the quest names and world
+> layout in sections 7 and 8 once they're moved into `shared/rules.js`.
+
 ## 1. Concept
 
 Players arrive in **Brightwater**, a small starter town, pick up quests from
