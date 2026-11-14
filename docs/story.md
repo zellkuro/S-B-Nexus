@@ -9,18 +9,26 @@
 
 ## The short version
 
-A year ago the cargo ship *Gull's Mercy* wrecked on Tideglass Isle carrying
-barrels of **rootsalt**, an alchemist's growth tonic. It soaked into the old
-blackberry bramble at the island's heart, and the bramble woke up hungry.
+Brightwater used to be a **minor shipping town**: timber and salt fish down
+the coast, and a stop for bigger ships passing by.
 
-Now **black thorn** is pushing up through the woods all along the coast:
-briars that grow overnight, berries gone glossy black with a violet glow, and
+A few years ago the cargo ship *Gull's Mercy* wrecked on Tideglass Isle. Her
+cargo was **blackberry cuttings**, bound for a farm further down the coast. The crates broke open on the rocks and the cuttings took root.
+**Nobody knew blackberries would grow so well here.**
+
+At first it was a blessing. Brambles spread from the island to the mainland,
+the town's herbalist found the berries make **health potions**, and Brightwater
+turned from a minor shipping town into a potion town. Farmers planted
+hedgerows at Meadowmere.
+
+Then the brambles kept growing. Now **black thorn** is pushing up through the
+woods all along the coast: briars that grow overnight, berries gone glossy black with a violet glow, and
 animals that eat them turning savage. Brightwater can't clear it alone, so the
 town council grants sellswords a **Thorn Writ**: a contract giving them
 **limited authority** to act on the town's behalf. Every player holds one.
 
-It's small and local on purpose: a shipwreck, a greedy goblin and a sick old
-bramble. Nothing world-ending.
+It's small and local on purpose: a shipwreck, a greedy goblin and a plant that
+grows too well. Nothing world-ending.
 
 ## Why it works for an MMO
 
@@ -40,8 +48,8 @@ bramble. Nothing world-ending.
 | 1 | **Brightwater** (city) | hub | Elder Mara and the council grant and extend Thorn Writs from the hall, and post bounties in the square. The herbalist brews ripe berries into health potions and burns blight berries |
 | 2 | **Meadowmere Glade** | 1–3 | Black thorn is choking the farm hedgerows. Wolves that eat blight berries become rotfang wolves |
 | 3 | **Glowcap Hollow** (mushroom forest) | 3–5 | Thorn vines strangle the glowcaps; Sporelings rot where they're wrapped. Goblin sappers harvest blight berries to sell as "growth jam" |
-| 4 | **Hollowmoor Ruins** | 5–7 | Thorn roots crack the old graves and the Hollow Knights rise. Their captain, Varn, guarded the island's bramble when he was alive, and knows where the thorn comes from |
-| 5 | **Tideglass Isle** (ferry, level 8) | 8–10 | The Thornheart, a black bramble the size of a hill, grows at the island's heart, fed by the wreck's spilled rootsalt. Grubnak the Sapper's goblins farm its berries |
+| 4 | **Hollowmoor Ruins** | 5–7 | Thorn roots crack the old graves and the Hollow Knights rise, led by their old captain, Varn. The roots in his tomb all run north, toward the sea and the island |
+| 5 | **Tideglass Isle** (ferry, level 8) | 8–10 | The Thornheart, a black bramble the size of a hill, grows where the wreck's cuttings first took root: the oldest and biggest bramble on the coast. Grubnak the Sapper's goblins farm its berries |
 
 The thorn's roots run **under the water** from the island to the coast, which
 is why it comes up from the ground, first along the shore.
@@ -139,10 +147,10 @@ It follows the same talk / visit / kill shape as the 10 quests already in
 | q03 | The Hunter's Camp | Meadowmere Glade | Find Tavi's camp; she says the wolves have turned | 2 |
 | q04 | Rotfang Pack | Meadowmere Glade | Kill 6 rotfang wolves | 2 |
 | q05 | Into the Hollow | Glowcap Hollow | Reach Scout Ryn's lookout | 3 |
-| q06 | Growth Jam | Glowcap Hollow | Kill 6 goblin sappers; find a rootsalt label in their packs (the first clue) | 4 |
+| q06 | Growth Jam | Glowcap Hollow | Kill 6 goblin sappers; find a shipping tag from the *Gull's Mercy* in their packs (the first clue) | 4 |
 | q07 | The Old Keep | Hollowmoor Ruins | Follow the thorn roots to the ruins | 5 |
 | q08 | Restless Garrison | Hollowmoor Ruins | Defeat 8 skeletons and Hollow Knights | 6 |
-| q09 | Varn's Watch | Ruins → city | Defeat Knight-Captain Varn; he names the island. Tell Mara | 6 |
+| q09 | Varn's Watch | Ruins → city | Defeat Knight-Captain Varn; the roots in his tomb all run toward the island. Tell Mara | 6 |
 | q10 | The Thornheart | Tideglass Isle | Take the ferry, find the *Gull's Mercy*, defeat Grubnak | 8–10 |
 
 Grubnak and Varn work like today's enemies (whoever hits first owns the
@@ -158,7 +166,7 @@ fight), so the whole chain can be done alone.
 | The harbour master | Brightwater docks | Checks your writ covers the Isle before the ferry sails |
 | Tavi the Hunter | Hunter's camp, Meadowmere Glade | First noticed the wolves changing |
 | Scout Ryn | Lookout, Glowcap Hollow | Watching the goblins' berry trade |
-| Knight-Captain Varn | Hollowmoor Ruins | Undead knight who once guarded the island's bramble |
+| Knight-Captain Varn | Hollowmoor Ruins | Long-dead captain of the old keep, woken when thorn roots broke into his tomb |
 | Grubnak the Sapper | Tideglass Isle | Goblin chief farming the Thornheart's berries |
 
 ## Enemies

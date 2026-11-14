@@ -143,7 +143,7 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
   <section class="story">
     <h2>The Black Thorn Blight</h2>
-    <p>A year ago the cargo ship <i>Gull's Mercy</i> wrecked on Tideglass Isle carrying barrels of rootsalt, an alchemist's growth tonic. It soaked into the old blackberry bramble at the island's heart, and the bramble woke up hungry. Now black thorn is pushing up through the woods all along the coast: briars that grow overnight, berries gone glossy black with a violet glow, and animals that eat them turning savage. Brightwater can't clear it alone, so the town council grants sellswords a <b>Thorn Writ</b>: a contract giving them limited authority to act on the town's behalf. That's you, and everyone else in the woods.</p>
+    <p>Brightwater used to be a minor shipping town. A few years ago the cargo ship <i>Gull's Mercy</i> wrecked on Tideglass Isle carrying blackberry cuttings bound for a farm further down the coast, and the cuttings took root. Nobody knew blackberries would grow so well here. At first it was a blessing: the herbalist found the berries make health potions, and Brightwater became a potion town. Then the brambles kept growing. Now black thorn is pushing up through the woods all along the coast: briars that grow overnight, berries gone glossy black with a violet glow, and animals that eat them turning savage. Brightwater can't clear it alone, so the town council grants sellswords a <b>Thorn Writ</b>: a contract giving them limited authority to act on the town's behalf. That's you, and everyone else in the woods.</p>
     <div class="modes">
       <div class="mode"><h3>The berries</h3><p><b>Ripe blackberries</b> still grow on healthy hedgerows. Eating one (raise it to your mouth) heals almost nothing, but the herbalist brews them into <b>health potions</b>: that's where every potion on the coast comes from. <b>Blight berries</b> are glossy black with a violet glow. Never eat them: collect them for the herbalist, who burns them. Wolves and goblins eat them, and that's what turns them.</p></div>
       <div class="mode"><h3>The Thorn Writ</h3><p>The council doesn't recruit you into anything: it grants you a <b>limited contract</b>. Your writ lets you bear arms in the woods, burn thorn on other people's land and claim bounties, but only in the lands it names. Prove yourself and the council extends it: the Glade first, then the Hollow, the Ruins, and finally the Isle. Bounties under the writ are posted on the board in the square.</p></div>
@@ -202,7 +202,7 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
       contracts: ["Put 6 skeletons back to rest", "Defeat 3 Hollow Knights", "Burn the thorn out of the chapel"] },
     { id: "isle", n: 5, name: "Tideglass Isle", lv: "8–10", x: ISLE.x, y: ISLE.y + 10, kind: "Combat zone · island",
       tagline: "A pine island: the wreck of the Gull's Mercy, a goblin fort, and the Thornheart.",
-      here: ["A ferry ride from the city docks", "The wreck of the Gull's Mercy and its split rootsalt barrels", "Grubnak's goblin fort on the cliff", "The Thornheart: a black bramble the size of a hill"],
+      here: ["A ferry ride from the city docks", "The wreck of the Gull's Mercy, where the first cuttings washed ashore", "Grubnak's goblin fort on the cliff", "The Thornheart: a black bramble the size of a hill"],
       enemies: ["Tide crabs with thorn-barnacles", "Goblin raiders", "Grubnak the Sapper (boss, lv 9)", "The Thornheart (hourly, open to everyone)"], quests: "q10",
       berries: "Blight berries everywhere. The Thornheart's are the size of your fist.",
       writ: "Extended to the Isle at level 8. The harbour master checks it before you board the ferry.",
@@ -215,8 +215,8 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
     city: "Elder Mara and the council grant Thorn Writs from the hall and post bounties in the square. The herbalist turns ripe berries into health potions and burns every blight berry you bring her.",
     fields: "Black thorn is choking the farm hedgerows. Wolves that eat blight berries turn into rotfang wolves. Save the ripe berries the farmers still have.",
     glowcap: "Thorn vines strangle the glowcaps, and Sporelings rot where they're wrapped. Goblin sappers harvest blight berries to sell as 'growth jam'.",
-    ruins: "Thorn roots crack the old graves and the Hollow Knights rise. Their captain, Varn, guarded the island's bramble when he was alive. He knows where the thorn comes from.",
-    isle: "At the island's heart grows the Thornheart, fed by the Gull's Mercy's spilled rootsalt, and Grubnak's goblins farm its berries. Burn it back and the thorn retreats along the whole coast for a while, until it grows back."
+    ruins: "Thorn roots crack the old graves and the Hollow Knights rise, led by their old captain, Varn. The roots in his tomb all run north, toward the sea and the island.",
+    isle: "At the island's heart grows the Thornheart, the oldest bramble on the coast, grown from the Gull's Mercy's first cuttings. Grubnak's goblins farm its berries. Burn it back and the thorn retreats along the whole coast for a while, until it grows back."
   };
 
   const CITY = { x: 745, y: coast(745) + 52 };
