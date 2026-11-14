@@ -4,7 +4,7 @@ Saves each player's level, XP, gold and quests. A Cloudflare Worker (JavaScript)
 with a D1 database, both on Cloudflare's free tier. The rules come from
 [`shared/rules.js`](../shared/rules.js), the same file the world uses.
 
-API and design: [design doc, section 9.1](../docs/game-design.md#91-backend-api).
+API and design: [design doc, section 12.1](../docs/game-design.md#121-backend-api).
 
 ## First-time setup
 You need a free Cloudflare account and Node.js 22.

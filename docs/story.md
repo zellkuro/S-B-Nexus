@@ -3,9 +3,9 @@
 > Status: **chosen, draft v1.** The visual map of the coast, with this story
 > on it: [docs/map.html](map.html), and its heights (contours, a close-up of
 > Brightwater and cross-sections): [docs/topography.html](topography.html).
-> Open them in a browser. Supersedes the
-> zone layout in [game-design.md section 8](game-design.md#8-world-layout-v1)
-> once the quests and enemies are moved over to `shared/rules.js`.
+> Open them in a browser. The numbers for everything here (quest steps,
+> enemy stats, bounties, thorn levels) are in
+> [game-design.md](game-design.md) sections 6–10.
 
 ## The short version
 

@@ -3,7 +3,7 @@
 A small world for trying the riskiest parts of Swords and Spells Nexus before
 building the real zone: saving to our backend, sword swings, shared enemies
 and PC attacks. These are spikes S1–S3, S5 and S6 in
-[the design doc](../docs/game-design.md#10-spikes-prototype-first).
+[the design doc](../docs/game-design.md#14-spikes).
 
 The whole world is built by `WebRoot/script.js`, so the Unity scene stays
 empty apart from the SDK.
