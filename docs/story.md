@@ -12,7 +12,7 @@
 Brightwater used to be a **minor shipping town**: timber and salt fish down
 the coast, and a stop for bigger ships passing by.
 
-A few years ago the cargo ship *Gull's Mercy* wrecked on Tideglass Isle. Her
+A few years ago the cargo ship *Dead Man's Dangle* wrecked on Tideglass Isle. Her
 cargo was **blackberry cuttings**, bound for a farm further down the coast. The crates broke open on the rocks and the cuttings took root.
 **Nobody knew blackberries would grow so well here.**
 
@@ -147,11 +147,11 @@ It follows the same talk / visit / kill shape as the 10 quests already in
 | q03 | The Hunter's Camp | Meadowmere Glade | Find Tavi's camp; she says the wolves have turned | 2 |
 | q04 | Rotfang Pack | Meadowmere Glade | Kill 6 rotfang wolves | 2 |
 | q05 | Into the Hollow | Glowcap Hollow | Reach Scout Ryn's lookout | 3 |
-| q06 | Growth Jam | Glowcap Hollow | Kill 6 goblin sappers; find a shipping tag from the *Gull's Mercy* in their packs (the first clue) | 4 |
+| q06 | Growth Jam | Glowcap Hollow | Kill 6 goblin sappers; find a shipping tag from the *Dead Man's Dangle* in their packs (the first clue) | 4 |
 | q07 | The Old Keep | Hollowmoor Ruins | Follow the thorn roots to the ruins | 5 |
 | q08 | Restless Garrison | Hollowmoor Ruins | Defeat 8 skeletons and Hollow Knights | 6 |
 | q09 | Varn's Watch | Ruins → city | Defeat Knight-Captain Varn; the roots in his tomb all run toward the island. Tell Mara | 6 |
-| q10 | The Thornheart | Tideglass Isle | Take the ferry, find the *Gull's Mercy*, defeat Grubnak | 8–10 |
+| q10 | The Thornheart | Tideglass Isle | Take the ferry, find the *Dead Man's Dangle*, defeat Grubnak | 8–10 |
 
 Grubnak and Varn work like today's enemies (whoever hits first owns the
 fight), so the whole chain can be done alone.
