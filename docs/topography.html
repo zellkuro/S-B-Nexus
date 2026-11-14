@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brightwater Coast Topography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* A survey sheet laid on the same night table as the coast map: topo tints on the map, dark page around it. */
+  --night: #0d1a24;
+  --panel: #142735;
+  --ink: #ebe3cc;
+  --muted: #a9b4b0;
+  --bronze: #d6974a;
+  --line: #2a4152;
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --italic: "IM Fell English", Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+  /* Layout: the regional sheet first, then the town close-up beside the cross-sections, then the height table. */
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--night); color: var(--ink); font: 17px/1.5 var(--body); }
+.wrap { max-width: 1360px; margin: 0 auto; padding: 20px 20px 48px; }
+h1 { font: 400 clamp(30px, 4vw, 46px)/1.05 var(--display); margin: 0; letter-spacing: 0.02em; text-wrap: balance; }
+h1 small { display: block; font: italic 400 17px/1.3 var(--italic); color: var(--muted); letter-spacing: 0; margin-top: 6px; }
+h2 { font: 400 26px/1.1 var(--display); margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 78ch; margin: 10px 0 16px; }
+figure { margin: 0; }
+figcaption { color: var(--muted); font-size: 14.5px; margin-top: 8px; max-width: 90ch; }
+.sheet { position: relative; width: 100%; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 18px 40px rgba(0,0,0,.45); background: #2b5878; }
+.sheet canvas { display: block; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 26px; margin-top: 12px; color: var(--muted); font-size: 14px; }
+.ramp { display: flex; align-items: center; gap: 8px; }
+.ramp canvas { width: 260px; height: 14px; border-radius: 3px; display: block; }
+.ramp .ends { display: flex; justify-content: space-between; width: 260px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.key { display: inline-flex; align-items: center; gap: 8px; }
+.key i { display: inline-block; width: 26px; height: 0; border-top: 1.5px solid #6b5636; }
+.key i.index { border-top-width: 3px; }
+.key i.sea { border-top-color: #9fc6dd; }
+.key i.road { border-top: 3px dashed #7a5530; }
+.key i.river { border-top: 3px solid #3f86c0; }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; margin-top: 34px; align-items: start; }
+@media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px 18px; }
+.card p { margin: 0 0 10px; color: var(--muted); font-size: 15.5px; }
+.profile { width: 100%; height: auto; display: block; color: var(--ink); }
+.profile + .profile { margin-top: 18px; }
+.ptitle { font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); margin: 14px 0 6px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 700 12px/1.2 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--bronze); font-weight: 700; }
+.tablewrap { overflow-x: auto; margin-top: 12px; }
+.section { margin-top: 34px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brightwater Coast Topography
+    <small>The same coast as the zone map, by height · first draft for building terrain</small>
+  </h1>
+  <p class="lede">Contours every 5 m, bolder every 25 m. Scale: 1 map unit is half a metre, so the coast is about 800 m wide and 500 m deep, and the highest ground, on Hollow Crag and Thornback Ridge, is a little over 80 m. The heights are a starting point: change any of them.</p>
+
+  <figure>
+    <div class="sheet"><canvas id="region" role="img" aria-label="Topographic map of the Brightwater Coast. The city sits low on the harbour slope. Meadowmere Glade lies in a shallow river valley south of it. Squire's Yard is on a terrace below the southern ridge. Hollowmoor Ruins stand on a high moor to the west. Glowcap Hollow is a sunken bowl ringed by ridges to the east. Tideglass Isle rises to cliffs on its north side, with the Thornheart in a hollow at its centre."></canvas></div>
+    <div class="legend">
+      <span class="ramp"><span><canvas id="ramp" width="260" height="14"></canvas><span class="ends"><span>−30 m</span><span>0</span><span>25</span><span>50</span><span>75 m</span></span></span></span>
+      <span class="key"><i></i>Contour, 5 m</span>
+      <span class="key"><i class="index"></i>Contour, 25 m</span>
+      <span class="key"><i class="sea"></i>Depth, 10 m</span>
+      <span class="key"><i class="river"></i>The Mere stream</span>
+      <span class="key"><i class="road"></i>Road</span>
+    </div>
+    <figcaption>Light comes from the north-west, so slopes facing south-east fall into shade. Triangles are spot heights.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Brightwater, close up</h2>
+      <p>The town climbs from the docks at the waterline up to the council hall on its hill. The west gate leads to Hollowmoor, the south gate to the Glade, the east gate to Glowcap. Contours every 1 m, bolder every 5 m.</p>
+      <div class="sheet"><canvas id="town" role="img" aria-label="Topographic close-up of Brightwater: docks at sea level in the bay to the east, the market terrace a few metres up, and the council hall on a small hill in the south-west of the walled town, with gates west, south and east."></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Cross-sections</h2>
+      <p>What the ground does along the two main routes. Heights are exaggerated about four times so the shape reads.</p>
+      <div class="ptitle">South to north: the story route</div>
+      <svg class="profile" id="profileNS" role="img" aria-label="Elevation profile from Squire's Yard north through Meadowmere Glade and Brightwater, across the water to Tideglass Isle."></svg>
+      <div class="ptitle">West to east: the side zones</div>
+      <svg class="profile" id="profileWE" role="img" aria-label="Elevation profile from Hollowmoor Ruins east through Brightwater to Glowcap Hollow."></svg>
+    </div>
+  </div>
+
+  <section class="section">
+    <h2>Heights by place</h2>
+    <p class="lede">What each place feels like to walk into, for laying out the Unity terrain. Unity's NavMesh agents climb slopes up to 45° by default; keep paths well under that for comfort in VR.</p>
+    <div class="tablewrap"><table id="heights"><thead><tr><th>Place</th><th>Height</th><th>Lie of the land</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const W = 1600, H = 1000, M_PER_UNIT = 0.5;
+
+  // ---------- Same coast as the zone map ----------
+  const coast = (x) => 300 + 45 * Math.sin(x / 170 + 0.5) + 28 * Math.sin(x / 63 + 2)
+    + 12 * Math.sin(x / 29) + 85 * Math.exp(-(((x - 840) / 70) ** 2));
+  const ISLE = { x: 1135, y: 120 };
+  const isleR = (a) => 105 + 22 * Math.sin(3 * a + 0.6) + 12 * Math.sin(5 * a + 2) + 6 * Math.sin(9 * a);
+  const CITY = { x: 745, y: coast(745) + 52 };
+  const DOCK = { x: 842, y: coast(842) - 18 };
+  const P = {
+    yard: { x: 800, y: 885, name: "Squire's Yard" },
+    fields: { x: 760, y: 655, name: "Meadowmere Glade" },
+    glowcap: { x: 1255, y: 575, name: "Glowcap Hollow" },
+    ruins: { x: 335, y: 545, name: "Hollowmoor Ruins" },
+    isle: { x: ISLE.x, y: ISLE.y + 10, name: "Tideglass Isle" }
+  };
+
+  // ---------- The height field (metres) ----------
+  const G = (x, y, x0, y0, sx, sy) => Math.exp(-(((x - x0) / sx) ** 2 + ((y - y0) / sy) ** 2));
+  const smooth = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  // The Mere stream runs north from the southern ridge, through the glade, into the harbour bay.
+  const riverX = (y) => 845 - 55 * smooth((y - 380) / 330) + 12 * Math.sin(y / 55);
+  const RIVER_TOP = 945;
+
+  function isleQ(x, y) {
+    const dx = x - ISLE.x, dy = (y - ISLE.y) / 0.82;
+    return Math.hypot(dx, dy) / isleR(Math.atan2(dy, dx));
+  }
+  function landH(x, y) {
+    const d = y - coast(x);
+    let h = 6 + 0.03 * d
+      + 52 * G(x, y, 300, 520, 260, 200)      // Hollowmoor moor
+      + 46 * G(x, y, 150, 420, 120, 90)       // Hollow Crag, north-west
+      + 10 * G(x, y, 335, 545, 50, 40)        // the keep's knoll
+      + 45 * G(x, y, 1255, 575, 260, 200)     // Glowcap rim...
+      - 52 * G(x, y, 1255, 575, 150, 115)     // ...and the bowl inside it
+      + 55 * G(x, y, 1000, 960, 380, 110)     // Thornback Ridge (south-east)
+      + 40 * G(x, y, 450, 965, 260, 100)      // south-west ridge
+      - 8 * G(x, y, 770, 650, 170, 230)       // the glade's shallow valley
+      + 12 * G(x, y, CITY.x - 30, CITY.y + 30, 50, 40)  // council hill
+      + 4 * G(x, y, 800, 885, 90, 60);        // the yard's terrace
+    if (y < RIVER_TOP) h -= 6 * Math.exp(-(((x - riverX(y)) / 22) ** 2)) * smooth((RIVER_TOP - y) / 40);
+    const t = smooth(d / 110);
+    return Math.max(0.3, h * t);
+  }
+  function isleH(x, y, q) {
+    let h = 4 + 60 * Math.pow(1 - q, 1.3)
+      + 20 * G(x, y, ISLE.x + 10, ISLE.y - 50, 45, 30)   // north cliffs, the goblin fort
+      - 22 * G(x, y, ISLE.x - 20, ISLE.y + 12, 35, 28);  // the Thornheart's hollow
+    return Math.max(0.3, h * Math.min(1, (1 - q) / 0.1));
+  }
+  function height(x, y) {
+    const q = isleQ(x, y);
+    if (q < 1) return isleH(x, y, q);
+    if (y > coast(x)) return landH(x, y);
+    const main = -(1.5 + 0.09 * (coast(x) - y));
+    const shelf = -(1.5 + 32 * (q - 1));
+    return Math.max(-30, Math.max(main, shelf));
+  }
+
+  // ---------- Colour ----------
+  const STOPS = [
+    [-30, [32, 66, 98]], [-12, [44, 92, 128]], [-0.01, [86, 140, 172]],
+    [0, [150, 184, 130]], [10, [176, 200, 140]], [22, [206, 214, 156]],
+    [35, [226, 214, 162]], [50, [214, 188, 138]], [65, [196, 162, 118]], [80, [232, 222, 206]]
+  ];
+  function tint(h) {
+    if (h <= STOPS[0][0]) return STOPS[0][1];
+    for (let i = 1; i < STOPS.length; i++) {
+      if (h <= STOPS[i][0]) {
+        const [h0, c0] = STOPS[i - 1], [h1, c1] = STOPS[i];
+        const t = (h - h0) / (h1 - h0);
+        return c0.map((v, k) => v + (c1[k] - v) * t);
+      }
+    }
+    return STOPS[STOPS.length - 1][1];
+  }
+
+  // ---------- Render a view of the height field ----------
+  // view: map-unit rectangle; cell: map units per grid cell.
+  function render(canvas, view, opts) {
+    const box = canvas.parentElement;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(box.clientWidth * dpr);
+    const aspect = (view.y1 - view.y0) / (view.x1 - view.x0);
+    const ch = Math.round(cw * aspect);
+    canvas.width = cw; canvas.height = ch;
+    const ctx = canvas.getContext("2d");
+    const s = cw / (view.x1 - view.x0);
+
+    // Height grid
+    const gw = opts.gw, gh = Math.round(gw * aspect);
+    const cx = (view.x1 - view.x0) / (gw - 1), cy = (view.y1 - view.y0) / (gh - 1);
+    const hg = new Float32Array(gw * gh);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) hg[j * gw + i] = height(view.x0 + i * cx, view.y0 + j * cy);
+
+    // Tint + hill shading, drawn small then scaled up smoothly
+    const off = document.createElement("canvas"); off.width = gw; off.height = gh;
+    const octx = off.getContext("2d"); const img = octx.createImageData(gw, gh);
+    const z = opts.shadeZ;
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+      const k = j * gw + i, h = hg[k];
+      const hx = hg[j * gw + Math.min(gw - 1, i + 1)] - hg[j * gw + Math.max(0, i - 1)];
+      const hy = hg[Math.min(gh - 1, j + 1) * gw + i] - hg[Math.max(0, j - 1) * gw + i];
+      // light from the north-west
+      let shade = 1;
+      if (h > 0) shade = Math.max(0.6, Math.min(1.25, 1 + (hx + hy) * z / (cx * 2)));
+      const c = tint(h);
+      img.data[k * 4] = Math.min(255, c[0] * shade);
+      img.data[k * 4 + 1] = Math.min(255, c[1] * shade);
+      img.data[k * 4 + 2] = Math.min(255, c[2] * shade);
+      img.data[k * 4 + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(off, 0, 0, cw, ch);
+
+    // Contours by marching squares
+    ctx.save(); ctx.scale(cw / (gw - 1), ch / (gh - 1));
+    const paths = { minor: new Path2D(), index: new Path2D(), sea: new Path2D(), shore: new Path2D() };
+    const lerp = (a, b, L) => (L - a) / (b - a);
+    for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
+      const a = hg[j * gw + i], b = hg[j * gw + i + 1], c = hg[(j + 1) * gw + i + 1], d = hg[(j + 1) * gw + i];
+      const lo = Math.min(a, b, c, d), hi = Math.max(a, b, c, d);
+      const levels = [];
+      if (lo < 0.15 && hi > 0.15) levels.push([0.15, "shore"]);
+      const I = opts.interval;
+      for (let L = Math.ceil(lo / I) * I; L <= hi; L += I) {
+        if (L <= 0) { if (L < 0 && L % opts.seaInterval === 0) levels.push([L, "sea"]); continue; }
+        levels.push([L, Math.abs(L % opts.indexEvery) < 1e-6 ? "index" : "minor"]);
+      }
+      for (const [L, kind] of levels) {
+        const pts = [];
+        if ((a < L) !== (b < L)) pts.push([i + lerp(a, b, L), j]);
+        if ((b < L) !== (c < L)) pts.push([i + 1, j + lerp(b, c, L)]);
+        if ((d < L) !== (c < L)) pts.push([i + lerp(d, c, L), j + 1]);
+        if ((a < L) !== (d < L)) pts.push([i, j + lerp(a, d, L)]);
+        const p = paths[kind];
+        for (let n = 0; n + 1 < pts.length; n += 2) { p.moveTo(pts[n][0], pts[n][1]); p.lineTo(pts[n + 1][0], pts[n + 1][1]); }
+      }
+    }
+    const px = (gw - 1) / cw; // one device pixel, in grid units
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(160, 200, 222, 0.55)"; ctx.lineWidth = 1.1 * dpr * px; ctx.stroke(paths.sea);
+    ctx.strokeStyle = "rgba(92, 70, 40, 0.45)"; ctx.lineWidth = 0.9 * dpr * px; ctx.stroke(paths.minor);
+    ctx.strokeStyle = "rgba(84, 60, 32, 0.85)"; ctx.lineWidth = 1.9 * dpr * px; ctx.stroke(paths.index);
+    ctx.strokeStyle = "rgba(40, 32, 20, 0.95)"; ctx.lineWidth = 2.2 * dpr * px; ctx.stroke(paths.shore);
+    ctx.restore();
+
+    // Map-unit drawing space for overlays
+    ctx.save(); ctx.scale(s, s); ctx.translate(-view.x0, -view.y0);
+    opts.overlay(ctx, s / dpr);
+    ctx.restore();
+  }
+
+  // ---------- Overlay helpers ----------
+  function label(ctx, k, text, x, y, opts = {}) {
+    const size = (opts.size || 15) / k;
+    ctx.font = `${opts.italic ? "italic " : ""}${opts.weight || 500} ${size}px ${opts.italic ? "'IM Fell English', Georgia, serif" : "'Alegreya Sans', system-ui, sans-serif"}`;
+    ctx.textAlign = opts.align || "center"; ctx.textBaseline = "middle";
+    ctx.lineJoin = "round"; ctx.lineWidth = 4 / k; ctx.strokeStyle = opts.halo || "rgba(245, 240, 225, 0.9)";
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = opts.color || "#2a2114"; ctx.fillText(text, x, y);
+  }
+  function spot(ctx, k, x, y, name) {
+    const h = height(x, y);
+    ctx.fillStyle = "#2a2114";
+    ctx.beginPath(); ctx.moveTo(x, y - 6 / k); ctx.lineTo(x + 5 / k, y + 3 / k); ctx.lineTo(x - 5 / k, y + 3 / k); ctx.closePath(); ctx.fill();
+    label(ctx, k, `${Math.round(h)} m`, x + 8 / k, y - 1 / k, { size: 13, align: "left", weight: 700 });
+    if (name) label(ctx, k, name, x + 8 / k, y + 14 / k, { size: 12, align: "left", italic: true });
+  }
+  function path(ctx, pts) {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+      ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    const l = pts[pts.length - 1]; ctx.lineTo(l[0], l[1]);
+  }
+  const ROADS = [
+    [[P.yard.x, P.yard.y - 40], [790, 790], [P.fields.x + 10, P.fields.y + 30], [775, 560], [CITY.x + 15, CITY.y + 60]],
+    [[CITY.x + 70, CITY.y + 30], [960, 480], [1080, 520], [P.glowcap.x - 150, P.glowcap.y]],
+    [[CITY.x - 70, CITY.y + 30], [560, 470], [470, 520], [P.ruins.x + 140, P.ruins.y]]
+  ];
+  function drawRiver(ctx, k) {
+    ctx.beginPath();
+    for (let y = RIVER_TOP; y >= coast(riverX(y)) - 2; y -= 4) {
+      const x = riverX(y);
+      y === RIVER_TOP ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#3f86c0"; ctx.lineWidth = 3 / k + 1.5; ctx.stroke();
+  }
+  function drawRoads(ctx, k) {
+    ctx.save(); ctx.setLineDash([10, 7]); ctx.strokeStyle = "rgba(110, 76, 40, 0.9)"; ctx.lineWidth = 3;
+    for (const r of ROADS) { path(ctx, r); ctx.stroke(); }
+    ctx.strokeStyle = "rgba(214, 151, 74, 0.95)"; ctx.setLineDash([3, 9]); ctx.lineWidth = 3;
+    path(ctx, [[DOCK.x + 10, DOCK.y - 6], [930, 250], [1010, 210], [ISLE.x - 95, ISLE.y + 50]]); ctx.stroke();
+    ctx.restore();
+  }
+  function scaleBar(ctx, k, x, y, metres) {
+    const len = metres / M_PER_UNIT;
+    ctx.fillStyle = "rgba(245, 240, 225, 0.88)"; ctx.fillRect(x - 10 / k, y - 22 / k, len + 20 / k, 40 / k);
+    ctx.fillStyle = "#2a2114"; ctx.fillRect(x, y, len, 5 / k);
+    ctx.fillStyle = "#f5f0e1"; ctx.fillRect(x + len / 2, y + 1 / k, len / 2 - 1 / k, 3 / k);
+    label(ctx, k, `${metres} m`, x + len / 2, y - 10 / k, { size: 12, weight: 700, halo: "rgba(0,0,0,0)" });
+  }
+
+  // ---------- Regional sheet ----------
+  const SPOTS = [
+    [150, 420, "Hollow Crag"], [P.ruins.x, P.ruins.y, "the keep"], [1000, 955, "Thornback Ridge"],
+    [1255, 410, "Glowcap rim"], [P.glowcap.x, P.glowcap.y, "hollow floor"], [P.fields.x, P.fields.y, null],
+    [P.yard.x + 40, P.yard.y - 10, null], [CITY.x - 30, CITY.y + 30, "council hill"],
+    [ISLE.x + 10, ISLE.y - 55, "fort cliffs"], [ISLE.x - 20, ISLE.y + 12, "Thornheart"]
+  ];
+  function regionOverlay(ctx, k) {
+    drawRiver(ctx, k);
+    drawRoads(ctx, k);
+    // City walls
+    ctx.strokeStyle = "rgba(60, 44, 26, 0.9)"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(CITY.x, CITY.y, 92, -0.35, Math.PI + 0.25); ctx.stroke();
+    for (const [x, y, name] of SPOTS) spot(ctx, k, x, y, name);
+    const zl = { size: 17, weight: 700, color: "#1d150b" };
+    label(ctx, k, "BRIGHTWATER", CITY.x - 10, CITY.y - 42, zl);
+    label(ctx, k, "MEADOWMERE GLADE", P.fields.x - 10, P.fields.y + 70, zl);
+    label(ctx, k, "SQUIRE'S YARD", P.yard.x - 10, P.yard.y + 45, zl);
+    label(ctx, k, "HOLLOWMOOR RUINS", P.ruins.x, P.ruins.y + 95, zl);
+    label(ctx, k, "GLOWCAP HOLLOW", P.glowcap.x, P.glowcap.y + 85, zl);
+    label(ctx, k, "TIDEGLASS ISLE", ISLE.x + 150, ISLE.y + 85, { ...zl, halo: "rgba(225, 236, 242, 0.85)" });
+    label(ctx, k, "The Mere", riverX(760) + 30, 760, { size: 14, italic: true, color: "#1f4f78", align: "left" });
+    label(ctx, k, "The Fogwater Sound", 560, 120, { size: 24, italic: true, color: "#e6eef2", halo: "rgba(0,0,0,0)" });
+    scaleBar(ctx, k, 1380, 960, 100);
+    // North arrow
+    ctx.fillStyle = "#2a2114"; ctx.beginPath(); ctx.moveTo(1550, 880); ctx.lineTo(1560, 915); ctx.lineTo(1550, 908); ctx.lineTo(1540, 915); ctx.closePath(); ctx.fill();
+    label(ctx, k, "N", 1550, 866, { size: 16, weight: 700 });
+  }
+
+  // ---------- Town close-up ----------
+  const TOWNV = { x0: CITY.x - 190, x1: CITY.x + 190, y0: CITY.y - 140, y1: CITY.y + 110 };
+  const TOWN = {
+    hall: { x: CITY.x - 30, y: CITY.y + 30, name: "Council hall" },
+    market: { x: CITY.x + 12, y: CITY.y - 8, name: "Market, bounty board" },
+    herbalist: { x: CITY.x + 50, y: CITY.y + 26, name: "Herbalist" },
+    tower: { x: DOCK.x - 52, y: DOCK.y + 4, name: "Harbour tower" },
+    docks: { x: DOCK.x - 10, y: DOCK.y + 8, name: "Docks and ferry" },
+    south: { x: CITY.x + 18, y: CITY.y + 91, name: "South gate" },
+    west: { x: CITY.x - 89, y: CITY.y + 26, name: "West gate" },
+    east: { x: CITY.x + 86, y: CITY.y + 30, name: "East gate" }
+  };
+  function townOverlay(ctx, k) {
+    // Streets
+    ctx.strokeStyle = "rgba(120, 92, 56, 0.85)"; ctx.lineWidth = 7; ctx.lineCap = "round";
+    const streets = [[TOWN.south, TOWN.market], [TOWN.market, TOWN.docks], [TOWN.west, TOWN.hall], [TOWN.hall, TOWN.market], [TOWN.market, TOWN.east], [TOWN.herbalist, TOWN.market]];
+    for (const [a, b] of streets) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    // Walls
+    ctx.strokeStyle = "rgba(60, 44, 26, 0.95)"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(CITY.x, CITY.y, 92, -0.35, Math.PI + 0.25); ctx.stroke();
+    // Docks
+    ctx.fillStyle = "#6b5034";
+    ctx.fillRect(DOCK.x - 40, DOCK.y + 8, 70, 6); ctx.fillRect(DOCK.x - 6, DOCK.y - 14, 6, 30); ctx.fillRect(DOCK.x + 20, DOCK.y - 8, 6, 22);
+    // Buildings
+    const bld = (p, w, h, fill) => { ctx.fillStyle = fill; ctx.fillRect(p.x - w / 2, p.y - h / 2, w, h); ctx.strokeStyle = "#2a2114"; ctx.lineWidth = 1.5; ctx.strokeRect(p.x - w / 2, p.y - h / 2, w, h); };
+    bld(TOWN.hall, 26, 18, "#e9dfc6");
+    bld(TOWN.herbalist, 12, 10, "#c9d9a8");
+    bld(TOWN.tower, 10, 10, "#e9dfc6");
+    ctx.fillStyle = "rgba(233, 223, 198, 0.75)"; ctx.fillRect(TOWN.market.x - 16, TOWN.market.y - 11, 32, 22);
+    ctx.strokeStyle = "#2a2114"; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2; ctx.strokeRect(TOWN.market.x - 16, TOWN.market.y - 11, 32, 22); ctx.setLineDash([]);
+    // Gates
+    for (const g of [TOWN.south, TOWN.west, TOWN.east]) { ctx.fillStyle = "#2a2114"; ctx.beginPath(); ctx.arc(g.x, g.y, 6, 0, Math.PI * 2); ctx.fill(); }
+    // Labels with heights
+    const lab = (p, dx, dy, align) => label(ctx, k, `${p.name} · ${Math.max(0, Math.round(height(p.x, p.y) * 10) / 10)} m`, p.x + dx, p.y + dy, { size: 13, weight: 700, align });
+    lab(TOWN.hall, -16, 0, "right");
+    lab(TOWN.market, 0, 22);
+    lab(TOWN.herbalist, 10, 8, "left");
+    lab(TOWN.tower, -2, -18, "right");
+    lab(TOWN.docks, 16, 24, "left");
+    lab(TOWN.south, 0, 16);
+    lab(TOWN.west, -10, -14, "left");
+    lab(TOWN.east, 10, 0, "left");
+    label(ctx, k, "Harbour bay", DOCK.x + 30, DOCK.y - 50, { size: 15, italic: true, color: "#e6eef2", halo: "rgba(0,0,0,0)" });
+    scaleBar(ctx, k, TOWNV.x0 + 22, TOWNV.y1 - 18, 25);
+  }
+
+  // ---------- Cross-section profiles ----------
+  function sampleRoute(stops, n) {
+    // stops: [[x, y, label], ...]; returns samples with distance in metres
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < stops.length - 1; i++) {
+      const len = Math.hypot(stops[i + 1][0] - stops[i][0], stops[i + 1][1] - stops[i][1]);
+      segs.push(len); total += len;
+    }
+    const out = [], marks = [];
+    let acc = 0;
+    marks.push([0, stops[0][2]]);
+    for (let i = 0; i < segs.length; i++) { acc += segs[i]; marks.push([acc * M_PER_UNIT, stops[i + 1][2]]); }
+    for (let s = 0; s <= n; s++) {
+      let d = (s / n) * total, i = 0;
+      while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
+      const t = Math.min(1, d / segs[i]);
+      const x = stops[i][0] + (stops[i + 1][0] - stops[i][0]) * t, y = stops[i][1] + (stops[i + 1][1] - stops[i][1]) * t;
+      out.push([(s / n) * total * M_PER_UNIT, height(x, y)]);
+    }
+    return { out, marks, total: total * M_PER_UNIT };
+  }
+  function drawProfile(svg, stops) {
+    const VW = 640, VH = 204, L = 40, R = 12, T = 44, B = 26;
+    const { out, marks, total } = sampleRoute(stops, 240);
+    const hMin = -25, hMax = 80;
+    const X = (d) => L + (d / total) * (VW - L - R);
+    const Y = (h) => T + (1 - (h - hMin) / (hMax - hMin)) * (VH - T - B);
+    svg.setAttribute("viewBox", `0 0 ${VW} ${VH}`);
+    let g = "";
+    for (const h of [0, 25, 50, 75]) {
+      g += `<line x1="${L}" x2="${VW - R}" y1="${Y(h)}" y2="${Y(h)}" stroke="currentColor" stroke-opacity="${h === 0 ? 0.5 : 0.12}" ${h === 0 ? 'stroke-dasharray="4 4"' : ""}/>`;
+      g += `<text x="${L - 6}" y="${Y(h) + 4}" text-anchor="end" font-size="11" fill="currentColor" fill-opacity="0.6">${h} m</text>`;
+    }
+    // sea fill below 0 where the ground dips under water
+    const ground = out.map(([d, h]) => `${X(d).toFixed(1)},${Y(h).toFixed(1)}`).join(" ");
+    g += `<rect x="${L}" y="${Y(0)}" width="${VW - L - R}" height="${Y(hMin) - Y(0)}" fill="#2f6a92" fill-opacity="0.55"/>`;
+    g += `<polygon points="${X(0)},${Y(hMin)} ${ground} ${X(total)},${Y(hMin)}" fill="#c7b98c" fill-opacity="0.92"/>`;
+    g += `<polyline points="${ground}" fill="none" stroke="#5b4426" stroke-width="2"/>`;
+    for (const [mi, [d, name]] of marks.entries()) {
+      const ly = mi % 2 ? T - 8 : T - 24;
+      const h = height(...(stops.find((s) => s[2] === name)).slice(0, 2));
+      g += `<line x1="${X(d)}" x2="${X(d)}" y1="${ly + 4}" y2="${Y(Math.max(h, 0))}" stroke="#d6974a" stroke-opacity="0.8" stroke-dasharray="2 3"/>`;
+      g += `<circle cx="${X(d)}" cy="${Y(Math.max(h, 0))}" r="3.5" fill="#d6974a"/>`;
+      const anchor = d < total * 0.06 ? "start" : d > total * 0.94 ? "end" : "middle";
+      g += `<text x="${X(d)}" y="${ly}" text-anchor="${anchor}" font-size="11.5" font-weight="700" fill="currentColor">${name}</text>`;
+    }
+    g += `<text x="${VW - R}" y="${VH - 6}" text-anchor="end" font-size="11" fill="currentColor" fill-opacity="0.6">${Math.round(total)} m</text>`;
+    g += `<text x="${L}" y="${VH - 6}" font-size="11" fill="currentColor" fill-opacity="0.6">0 m</text>`;
+    svg.innerHTML = g;
+  }
+
+  // ---------- Height table ----------
+  const ROWS = [
+    ["Brightwater docks", DOCK.x - 10, DOCK.y + 8, "At the waterline in the bay. The town climbs west and south from here."],
+    ["Brightwater, council hill", CITY.x - 30, CITY.y + 30, "The high point inside the walls, a short climb up from the market terrace."],
+    ["Meadowmere Glade", P.fields.x, P.fields.y, "A shallow, open valley either side of the Mere stream. Gentle slopes: easy walking, good sightlines to slimes and wolves."],
+    ["Squire's Yard", P.yard.x, P.yard.y, "A flat terrace part-way up the southern ridge. You start up here and walk downhill into the glade."],
+    ["Hollowmoor Ruins (the keep)", P.ruins.x, P.ruins.y, "High moor to the west. The road climbs steadily from the city; the keep stands on a knoll, looking down on its approach."],
+    ["Hollow Crag", 150, 420, "The highest ground on the west side, above the ruins. A lookout."],
+    ["Glowcap Hollow (floor)", P.glowcap.x, P.glowcap.y, "A sunken bowl. You cross the rim and walk down into it: the glow below, ridges all around."],
+    ["Glowcap rim", 1255, 410, "The ridge ringing the hollow. Roads cross it through low saddles."],
+    ["Thornback Ridge", 1000, 955, "The long ridge along the south-east edge: the coast's backbone and the world's southern wall."],
+    ["Tideglass Isle (fort cliffs)", ISLE.x + 10, ISLE.y - 55, "The island rises to cliffs on its north side, where Grubnak's fort stands."],
+    ["The Thornheart's hollow", ISLE.x - 20, ISLE.y + 12, "A dip in the island's centre, so the Thornheart sits in a bowl you look down into."]
+  ];
+
+  // ---------- Draw everything ----------
+  function drawAll() {
+    render(document.getElementById("region"), { x0: 0, y0: 0, x1: W, y1: H },
+      { gw: 640, interval: 5, indexEvery: 25, seaInterval: 10, shadeZ: 2.2, overlay: regionOverlay });
+    render(document.getElementById("town"), TOWNV,
+      { gw: 380, interval: 1, indexEvery: 5, seaInterval: 2, shadeZ: 6, overlay: townOverlay });
+  }
+
+  // Legend ramp
+  const ramp = document.getElementById("ramp").getContext("2d");
+  for (let x = 0; x < 260; x++) { const h = -30 + (x / 259) * 105; const c = tint(h); ramp.fillStyle = `rgb(${c.map(Math.round).join(",")})`; ramp.fillRect(x, 0, 1, 14); }
+
+  drawProfile(document.getElementById("profileNS"), [
+    [P.yard.x, P.yard.y, "Squire's Yard"], [P.fields.x, P.fields.y, "Meadowmere Glade"],
+    [CITY.x, CITY.y, "Brightwater"], [DOCK.x, DOCK.y, "Docks"], [ISLE.x - 20, ISLE.y + 12, "Thornheart"], [ISLE.x + 10, ISLE.y - 55, "Fort cliffs"]
+  ]);
+  drawProfile(document.getElementById("profileWE"), [
+    [150, 420, "Hollow Crag"], [P.ruins.x, P.ruins.y, "Hollowmoor keep"], [CITY.x, CITY.y, "Brightwater"],
+    [1255, 410, "Glowcap rim"], [P.glowcap.x, P.glowcap.y, "Hollow floor"]
+  ]);
+
+  document.querySelector("#heights tbody").innerHTML = ROWS.map(([name, x, y, text]) =>
+    `<tr><td>${name}</td><td class="num">${Math.max(0, Math.round(height(x, y)))} m</td><td>${text}</td></tr>`).join("");
+
+  const boot = () => drawAll();
+  window.addEventListener("resize", () => { clearTimeout(window.__rz); window.__rz = setTimeout(drawAll, 150); });
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(boot, boot);
+})();
+</script>
+</body>
+</html>
