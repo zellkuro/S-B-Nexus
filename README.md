@@ -10,7 +10,7 @@ Status: **planning, first test world built**. See the
 ## What's here
 | Folder | What it is |
 |---|---|
-| [`docs/`](docs/game-design.md) | The design doc, [the story](docs/story.md) (The Black Thorn Blight) and [a visual map](docs/map.html), and [a step-by-step Unity guide](docs/unity-first-scene.md) for a first scene: a sword and an enemy, in Visual Scripting |
+| [`docs/`](docs/game-design.md) | The design doc, [the story](docs/story.md) (The Black Thorn Blight: a blackberry blight, sellswords with Thorn Writs) and [a visual map](docs/map.html), and [a step-by-step Unity guide](docs/unity-first-scene.md) for a first scene: a sword and an enemy, in Visual Scripting |
 | [`shared/rules.js`](shared/rules.js) | Every game rule and number: levels, damage, enemies, quests. Used by the world and the backend |
 | [`backend/`](backend/README.md) | Saves player progress. Cloudflare Worker + D1 database, JavaScript |
 | [`world/`](world/README.md) | The test world: a town, quest givers, slimes, a sword and a HUD |

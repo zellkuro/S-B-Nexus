@@ -14,28 +14,28 @@ blackberry bramble at the island's heart, and the bramble woke up hungry.
 Now **black thorn** is pushing up through the woods all along the coast:
 briars that grow overnight, berries gone glossy black with a violet glow, and
 animals that eat them turning savage. Brightwater can't clear it alone, so the
-town posts **contracts**, and sellswords come to take them. That's every
-player.
+town council grants sellswords a **Thorn Writ**: a contract giving them
+**limited authority** to act on the town's behalf. Every player holds one.
 
 It's small and local on purpose: a shipwreck, a greedy goblin and a sick old
 bramble. Nothing world-ending.
 
 ## Why it works for an MMO
 
-- **Nobody is the one hero.** Everyone is a sellsword working the same
-  contracts.
-- **The thorn grows back.** That explains respawning enemies, contracts that
+- **Nobody is the one hero.** Everyone is a sellsword holding the same kind of
+  writ.
+- **The thorn grows back.** That explains respawning enemies, bounties that
   return and a boss that comes back every hour.
-- **No group to join.** There's no order, guild or party. Players take
-  contracts on their own, and run into each other because the same contracts
-  send them to the same places.
+- **No group to join.** The council grants you authority; it doesn't recruit
+  you into anything. There's no order, guild or party. Players work alone and
+  run into each other because their writs send them to the same places.
 
 ## Places
 
 | # | Zone | Levels | What the thorn has done |
 |---|---|---|---|
-| 0 | **Squire's Yard** (tutorial) | 1 | Captain Bren trains new sellswords in a clearing south of town. Mid-drill, a slime crawls out of a black bramble with berries stuck in it. The first contract: burn that bramble |
-| 1 | **Brightwater** (city) | hub | Elder Mara posts the town's contracts on the board in the square. The herbalist pays for every blight berry brought back |
+| 0 | **Squire's Yard** (tutorial) | 1 | Captain Bren trains new sellswords in a clearing south of town. Mid-drill, a slime crawls out of a black bramble with berries stuck in it. Burn that bramble and Bren signs your first Thorn Writ |
+| 1 | **Brightwater** (city) | hub | Elder Mara and the council grant and extend Thorn Writs from the hall, and post bounties in the square. The herbalist brews ripe berries into health potions and burns blight berries |
 | 2 | **Meadowmere Glade** | 1–3 | Black thorn is choking the farm hedgerows. Wolves that eat blight berries become rotfang wolves |
 | 3 | **Glowcap Hollow** (mushroom forest) | 3–5 | Thorn vines strangle the glowcaps; Sporelings rot where they're wrapped. Goblin sappers harvest blight berries to sell as "growth jam" |
 | 4 | **Hollowmoor Ruins** | 5–7 | Thorn roots crack the old graves and the Hollow Knights rise. Their captain, Varn, guarded the island's bramble when he was alive, and knows where the thorn comes from |
@@ -49,33 +49,62 @@ is why it comes up from the ground, first along the shore.
 The blackberry is the heart of the look and of a few mechanics:
 
 - **Ripe blackberries** grow on healthy hedgerows (the farm glade, the training
-  yard fence). Pick one and **eat it** (bring it to your mouth in VR; click it
-  on PC) to heal a little. A small, physical VR moment.
+  yard fence). Eating one (bring it to your mouth in VR; click it on PC) heals
+  **almost nothing**: 1 HP, a little VR moment rather than a real heal.
+- **Health potions are made from them.** In the lore, every health potion on
+  the coast is brewed by the herbalist from ripe blackberries, which is why the
+  thorn choking the hedgerows matters to the town. Potions are the real heal
+  (an item for later, once there's an inventory and gold).
 - **Blight berries** are glossy black with a violet glow. Eating one is a bad
   idea (a short "sick" effect). Collect them instead: the herbalist pays for
-  them, and many contracts ask for them.
+  them so she can burn them, and many bounties ask for them.
 - **Why the animals turn:** wolves and goblins eat blight berries. Goblins
   bottle them as "growth jam".
 - **The Thornheart's berries** are the size of a fist: a boss drop.
 
-## Contracts
+## The Thorn Writ (limited contracts)
 
-The contract board in Brightwater's square is the core loop. There's **no
-group or order to join**.
+Each sellsword holds a **Thorn Writ** from Brightwater's council: a contract
+granting **limited authority** to act on the town's behalf. There's **no group
+or order to join**: the council lends you its authority; it doesn't recruit
+you.
 
-- **Limited:** each zone shows a few contracts at a time. They rotate every
+**What the writ allows:**
+
+- Bear arms in the woods and on the coast roads.
+- Burn black thorn on other people's land (farms, the old lord's keep).
+- Claim the town's bounties.
+
+**What makes it limited:** it only covers the lands it names. Prove yourself
+and the council extends it. This gives the zone order a reason in the story:
+
+| Writ covers | Granted | By |
+|---|---|---|
+| Meadowmere Glade | After the tutorial (level 1) | Captain Bren signs the first writ |
+| Glowcap Hollow | Level 3 | Elder Mara, at the council hall |
+| Hollowmoor Ruins | Level 5 | Elder Mara. The keep is the old lord's land, so the council's say-so matters there |
+| Tideglass Isle | Level 8 | Elder Mara. The harbour master checks your writ before letting you on the ferry |
+
+In the game these line up with the zone level ranges and the story quests that
+already gate the zones; the writ is the in-story reason for the gate.
+
+### Bounties
+
+Work under the writ comes from the **bounty board** in Brightwater's square:
+
+- **Limited time:** each zone shows a few bounties at a time. They rotate every
   **30 minutes** on the SDK's shared clock, so everyone sees the same ones.
-- **Taken alone:** a player holds up to **three** contracts at once and does
-  them on their own.
-- **Shared by accident:** many players can hold the same contract at once, so
+- **Taken alone:** a player holds up to **three** at once, only in lands their
+  writ covers.
+- **Shared by accident:** many players can hold the same bounty at once, so
   people meet clearing the same briar patch. They help each other just by
   being there.
-- **Push the thorn back:** every finished contract lowers that zone's **thorn
+- **Push the thorn back:** every finished bounty lowers that zone's **thorn
   level** (shown on the board).
 
-Sample contracts:
+Sample bounties:
 
-| Zone | Contracts |
+| Zone | Bounties |
 |---|---|
 | Squire's Yard | Burn the black bramble in the yard (tutorial) |
 | Meadowmere Glade | Burn 4 briar patches · Cull 5 rotfang wolves · Bring 6 blight berries to the herbalist |
@@ -85,25 +114,25 @@ Sample contracts:
 
 ### Thorn Surges and the Thornheart
 
-No party is ever needed for these; anyone who turns up joins in.
+No party is ever needed for these; anyone whose writ covers the zone joins in
+by turning up.
 
-- **Thorn Surge:** when a zone's thorn level gets too high, a surge contract
+- **Thorn Surge:** when a zone's thorn level gets too high, a surge bounty
   appears there: a **thorn brute** (an elite version of the zone's enemy) and a
-  wave of creatures. Anyone in the zone can take part; everyone who hits the
-  brute gets paid.
-- **The Thornheart:** once an hour, a contract opens on the island to **burn
+  wave of creatures. Everyone who hits the brute gets paid.
+- **The Thornheart:** once an hour, a bounty opens on the island to **burn
   back the Thornheart**. Succeed and the thorn level drops in every zone for a
   while, which even players who weren't there notice. Then it grows back.
 
 ## Story quests (solo)
 
-Alongside contracts, a short story chain takes each player through every zone.
+Alongside bounties, a short story chain takes each player through every zone.
 It follows the same talk / visit / kill shape as the 10 quests already in
 `shared/rules.js`, renamed:
 
 | # | Quest | Zone | What you do | Level |
 |---|---|---|---|---|
-| q01 | Black Bramble | Squire's Yard | Kill the thorn slime, burn the bramble, report to Bren | 1 |
+| q01 | Black Bramble | Squire's Yard | Kill the thorn slime, burn the bramble, report to Bren; he signs your first writ | 1 |
 | q02 | Choked Hedgerows | Meadowmere Glade | Kill 5 thorn slimes | 1 |
 | q03 | The Hunter's Camp | Meadowmere Glade | Find Tavi's camp; she says the wolves have turned | 2 |
 | q04 | Rotfang Pack | Meadowmere Glade | Kill 6 rotfang wolves | 2 |
@@ -121,9 +150,10 @@ fight), so the whole chain can be done alone.
 
 | Who | Where | Role |
 |---|---|---|
-| Elder Mara | Brightwater square | Posts the town's contracts; gives the main story quests |
-| Captain Bren | Squire's Yard | Trains new sellswords; first quest giver |
-| The herbalist | Brightwater | Buys and burns blight berries |
+| Elder Mara | Council hall, Brightwater | Grants and extends Thorn Writs; gives the main story quests |
+| Captain Bren | Squire's Yard | Trains new sellswords; signs the first writ |
+| The herbalist | Brightwater | Brews health potions from ripe blackberries; buys and burns blight berries |
+| The harbour master | Brightwater docks | Checks your writ covers the Isle before the ferry sails |
 | Tavi the Hunter | Hunter's camp, Meadowmere Glade | First noticed the wolves changing |
 | Scout Ryn | Lookout, Glowcap Hollow | Watching the goblins' berry trade |
 | Knight-Captain Varn | Hollowmoor Ruins | Undead knight who once guarded the island's bramble |
@@ -150,8 +180,8 @@ fight), so the whole chain can be done alone.
 - **Spells:** the town's alchemists find that fire burns black thorn best.
   Learning **embercraft** is a natural first spell school, and it fits the
   game's name.
-- **Gold:** contract pay and berry sales give gold its first use (market,
-  sword upgrades).
+- **Gold and potions:** bounty pay and berry sales give gold its first use:
+  buying blackberry health potions from the herbalist, then sword upgrades.
 
 ## Technical notes
 
@@ -159,9 +189,11 @@ fight), so the whole chain can be done alone.
   enemy mode. Today only the first player to hit an enemy can damage it (design
   doc 6.3). Shared enemies need "anyone can hit, everyone who hits gets
   credit", with one player's page still running the AI.
-- **Thorn levels and contract rotation** are shared numbers. Inside one world
+- **Thorn levels and bounty rotation** are shared numbers. Inside one world
   instance, space state can hold them. Across instances, the backend keeps
-  them (contracts as a new event type, thorn level per zone).
+  them (bounties as a new event type, thorn level per zone). The writ itself is
+  per player: the lands it covers can be worked out from level and story
+  quests already saved by the backend.
 - **Eating a berry:** a grabbable berry with a trigger collider near the head
-  (VR), or a click (PC). Heals through the same player-health graph as the
-  Unity guide's Part 5.
+  (VR), or a click (PC). Heals 1 HP through the same player-health graph as
+  the Unity guide's Part 5.
